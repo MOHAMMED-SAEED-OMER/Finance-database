@@ -30,8 +30,8 @@ def fetch_pending_payments():
         # Debug: Display fetched column names
         st.write("Fetched columns:", df.columns.tolist())
 
-        # Filter for pending payments
-        pending_payments = df[df["Payment Status"] == "Pending"]
+        # Filter for pending payments using the exact column name
+        pending_payments = df[df["Payment status"] == "Pending"]
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
