@@ -1,54 +1,46 @@
+import json
 import gspread
-from flask import Flask, request, jsonify
-from oauth2client.service_account import ServiceAccountCredentials
+import streamlit as st
+from google.oauth2.service_account import Credentials
 
-# Initialize Flask app
-app = Flask(__name__)
+# Load the credentials from Streamlit Secrets
+key_data = st.secrets["GOOGLE_CREDENTIALS"]
+credentials = Credentials.from_service_account_info(key_data)
 
-# Google Sheets setup
-SERVICE_ACCOUNT_FILE = 'clever-bee-442514-j7-ed066186e963.json'
-SPREADSHEET_NAME = 'https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0'
-TAB_NAME = 'database'
+# Authenticate with Google Sheets
+client = gspread.authorize(credentials)
 
-# Authenticate and access Google Sheet
-def get_google_sheet():
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
-    client = gspread.authorize(credentials)
-    sheet = client.open_by_url(SPREADSHEET_NAME).worksheet(TAB_NAME)
-    return sheet
+# Open the Google Sheet by URL
+sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/YOUR-SPREADSHEET-ID/edit").sheet1
 
-# Route to fetch all data
-@app.route('/data', methods=['GET'])
-def get_data():
+# Streamlit App Interface
+st.title("Google Sheets Integration")
+
+# Fetch and Display Data from Google Sheets
+if st.button("Fetch Data"):
     try:
-        sheet = get_google_sheet()
-        records = sheet.get_all_records()
-        return jsonify({"status": "success", "data": records}), 200
+        # Get all records from the sheet
+        data = sheet.get_all_records()  # List of dictionaries
+        if data:
+            st.write("Data from Google Sheets:")
+            st.table(data)  # Display as a table
+        else:
+            st.info("No data found in the Google Sheet.")
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        st.error(f"Error fetching data: {e}")
 
-# Route to add a new record
-@app.route('/data', methods=['POST'])
-def add_data():
-    try:
-        data = request.json
-        sheet = get_google_sheet()
-        sheet.append_row(list(data.values()))
-        return jsonify({"status": "success", "message": "Data added successfully"}), 201
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+# Add a new record to the Google Sheet
+st.header("Add Data to Google Sheets")
+name = st.text_input("Name")
+amount = st.number_input("Amount", min_value=0.0, step=1.0)
 
-# Route to update a record
-@app.route('/data/<int:row>', methods=['PUT'])
-def update_data(row):
+if st.button("Add Data"):
     try:
-        data = request.json
-        sheet = get_google_sheet()
-        cell_list = sheet.range(row, 1, row, len(data))
-        for i, key in enumerate(data):
-            cell_list[i].value = data[key]
-        sheet.update_cells(cell_list)
-        return jsonify({"status": "success", "message": f"Row {row} updated successfully"}), 200
+        if name and amount:
+            # Append a new row to the Google Sheet
+            sheet.append_row([name, amount])
+            st.success(f"Added record: {name}, {amount}")
+        else:
+            st.warning("Please provide both Name and Amount.")
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        st.error(f"Error adding data: {e}")
