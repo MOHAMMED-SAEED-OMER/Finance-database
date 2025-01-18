@@ -4,7 +4,6 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
 import pytz
-import time  # For delayed reload
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -24,19 +23,13 @@ def fetch_pending_payments():
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
 
-        # Convert data to DataFrame
+        # Convert data to DataFrame and filter for pending payments
         df = pd.DataFrame(data)
-
-        # Debug: Display fetched column names
-        st.write("Fetched columns:", df.columns.tolist())
-
-        # Filter for pending payments using the exact column name
         pending_payments = df[df["Payment status"] == "Pending"]
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
-
 
 # Update payment status and date
 def issue_payment(sheet, row_index):
@@ -60,6 +53,10 @@ def issue_payment(sheet, row_index):
 def render_payment_page():
     st.title("💵 Payment Processing")
     st.write("View and process pending payments.")
+
+    # Session state to track issued payments
+    if "issued_payment" not in st.session_state:
+        st.session_state["issued_payment"] = None
 
     try:
         client = load_credentials()
@@ -88,9 +85,12 @@ def render_payment_page():
             row_index = pending_payments[pending_payments["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
             success = issue_payment(sheet, row_index)
             if success:
+                st.session_state["issued_payment"] = trx_id
                 st.success(f"Payment issued for request {trx_id}.")
-                time.sleep(1)  # Delay for user feedback
-                st.write('<meta http-equiv="refresh" content="0; url=." />', unsafe_allow_html=True)
+
+        # Display a message if a payment was recently issued
+        if st.session_state["issued_payment"]:
+            st.info(f"Recently issued payment for TRX ID: {st.session_state['issued_payment']}")
 
     except Exception as e:
         st.error(f"Error loading payment page: {e}")
