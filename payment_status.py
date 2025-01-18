@@ -15,9 +15,9 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch approved requests
+# Fetch approved and unissued requests
 @st.cache_data(ttl=60)  # Cache data for 60 seconds
-def fetch_approved_requests():
+def fetch_pending_payments():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
@@ -26,11 +26,14 @@ def fetch_approved_requests():
         # Convert to DataFrame
         df = pd.DataFrame(data)
 
-        # Filter for approved requests
-        approved_requests = df[df["Approval Status"] == "Approved"]
-        return approved_requests
+        # Filter for approved and unissued requests
+        pending_payments = df[
+            (df["Approval Status"] == "Approved") &
+            (df["Payment Status"] != "Issued")
+        ]
+        return pending_payments
     except Exception as e:
-        st.error(f"Error fetching approved requests: {e}")
+        st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()
 
 # Update payment status in the database
@@ -63,19 +66,19 @@ def render_payment_status():
     st.title("💸 Payment Status")
     st.write("Issue payments for approved requests.")
 
-    # Fetch approved requests
-    approved_requests = fetch_approved_requests()
+    # Fetch approved and unissued requests
+    pending_payments = fetch_pending_payments()
 
-    if approved_requests.empty:
-        st.info("No approved requests available.")
+    if pending_payments.empty:
+        st.info("No pending payments available.")
         return
 
-    # Show approved requests in a table
-    st.subheader("Approved Requests")
-    st.dataframe(approved_requests)
+    # Show pending payments in a table
+    st.subheader("Pending Payments")
+    st.dataframe(pending_payments)
 
     # Select a request to issue payment
-    trx_id = st.selectbox("Select a TRX ID to issue payment:", options=[""] + list(approved_requests["TRX ID"]))
+    trx_id = st.selectbox("Select a TRX ID to issue payment:", options=[""] + list(pending_payments["TRX ID"]))
 
     if st.button("Issue Payment"):
         if not trx_id:
