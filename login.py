@@ -18,8 +18,11 @@ def load_credentials():
 def fetch_user_data():
     try:
         client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("User Profiles")
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")  # Correct tab name
         data = sheet.get_all_records()
+
+        # Debug: Show the data headers
+        st.write("Fetched Data Headers:", list(data[0].keys()) if data else "No data available")
 
         # Convert to DataFrame
         df = pd.DataFrame(data)
@@ -27,7 +30,7 @@ def fetch_user_data():
         # Ensure expected columns exist
         required_columns = {"Email", "Password", "Role"}
         if not required_columns.issubset(df.columns):
-            raise ValueError("The User Profiles sheet must include 'Email', 'Password', and 'Role' columns.")
+            raise ValueError(f"The Users sheet must include the following columns: {required_columns}")
 
         return df
     except Exception as e:
