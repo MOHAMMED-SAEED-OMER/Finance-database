@@ -98,41 +98,40 @@ def render_request_form():
             submission_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
             # Prepare the data to append
-# Prepare the data to append
-new_row = [
-    trx_id,  # TRX ID
-    "Expense",  # TRX Type
-    "Project expense",  # TRX Category
-    "Request based",  # Request/Direct
-    requester_name,  # Requester Name
-    project,  # Project Name
-    budget_line,  # Budget Line
-    purpose,  # Purpose
-    request_details,  # Detail
-    total_amount,  # Requested Amount
-    submission_date,  # Request Submission Date
-    "Pending",  # Approval Status
-    "",  # Approval Date
-    "",  # Payment Status
-    "",  # Payment Date
-    payment_method,  # Payment Method
-    "",  # Liquidation Status
-    "",  # Liquidated Amount
-    "",  # Liquidation Date
-    "",  # Liquidated Invoices
-    "",  # Returned Amount
-    "",  # Related Request ID
-    "",  # Supplier/Donor
-    "",  # Contribution
-    notes,  # Remarks
-]
+            new_row = [
+                trx_id,  # TRX ID
+                "Expense",  # TRX Type
+                "Project expense",  # TRX Category
+                "Request based",  # Request/Direct
+                requester_name,  # Requester Name
+                project,  # Project Name
+                budget_line,  # Budget Line
+                purpose,  # Purpose
+                request_details,  # Detail
+                total_amount,  # Requested Amount
+                submission_date,  # Request Submission Date
+                "Pending",  # Approval Status
+                "",  # Approval Date
+                "",  # Payment Status
+                "",  # Payment Date
+                payment_method,  # Payment Method
+                "",  # Liquidation Status
+                "",  # Liquidated Amount
+                "",  # Liquidation Date
+                "",  # Liquidated Invoices
+                "",  # Returned Amount
+                "",  # Related Request ID
+                "",  # Supplier/Donor
+                "",  # Contribution
+                notes,  # Remarks
+            ]
 
-# Debug: Print the new_row data
-st.write("Appending the following data to the Google Sheet:")
-st.write(new_row)
+            # Debug: Print the new_row data
+            st.write("Appending the following data to the Google Sheet:")
+            st.write(new_row)
 
-# Append the data to the Google Sheet
-sheet.append_row(new_row)
+            # Append the data to the Google Sheet
+            sheet.append_row(new_row)
 
             st.success(f"Request submitted successfully! TRX ID: {trx_id}")
         except Exception as e:
