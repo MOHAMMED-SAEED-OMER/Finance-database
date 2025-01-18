@@ -15,8 +15,8 @@ except Exception as e:
     st.error(f"Error loading credentials: {e}")
     st.stop()
 
-# Input your Google Sheet URL here
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit?gid=0#gid=0"
+# Google Sheet URL
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
 
 # Function to fetch data from Google Sheets
 def fetch_data():
