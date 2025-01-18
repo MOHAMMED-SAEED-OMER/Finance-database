@@ -1,6 +1,8 @@
 import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
+from datetime import datetime
+import pytz
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -30,6 +32,20 @@ def fetch_dropdown_options():
         st.error(f"Error fetching dropdown options: {e}")
         return {"Project Name": [], "Payment Method": []}
 
+# Generate the next TRX ID
+def generate_trx_id(sheet):
+    try:
+        all_rows = sheet.get_all_records()
+        if all_rows:
+            last_trx_id = all_rows[-1].get("TRX ID", "TRX-0000")  # Default if no TRX ID exists
+            next_id_number = int(last_trx_id.split("-")[1]) + 1
+            return f"TRX-{next_id_number:04d}"
+        else:
+            return "TRX-0001"
+    except Exception as e:
+        st.error(f"Error generating TRX ID: {e}")
+        return "TRX-0001"
+
 # Render the Request Submission Page
 def render_request_form():
     st.title("📝 Submit a Request")
@@ -55,6 +71,9 @@ def render_request_form():
     total_amount = st.number_input("Total Amount Requested (negative for expense):", value=0.0, step=0.01)
     notes = st.text_area("Additional Notes or Remarks:")
 
+    # Get the requester name from session state
+    requester_name = st.session_state.get("user_email", "Unknown")
+
     # Submit button
     if st.button("Submit Request"):
         if not project:
@@ -71,25 +90,44 @@ def render_request_form():
             client = load_credentials()
             sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
+            # Generate TRX ID
+            trx_id = generate_trx_id(sheet)
+
+            # Get the current date and time in Baghdad timezone
+            baghdad_tz = pytz.timezone("Asia/Baghdad")
+            submission_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
+
             # Prepare the data to append
             new_row = [
+                trx_id,  # TRX ID
                 "Expense",  # TRX Type
-                "Request based",  # TRX Category
-                budget_line,  # Budget Line
+                "Project expense",  # TRX Category
+                "Request based",  # Request/Direct
+                requester_name,  # Requester Name
                 project,  # Project Name
-                payment_method,  # Payment Method
-                "To be liquidated",  # Default Liquidation Status
+                budget_line,  # Budget Line
                 purpose,  # Purpose
-                request_details,  # Request Details
-                total_amount,  # Amount
-                notes,  # Notes/Remarks
+                request_details,  # Detail
+                total_amount,  # Requested Amount
+                submission_date,  # Request Submission Date
+                "",  # Approval Status
+                "",  # Approval Date
+                "",  # Payment Status
+                "",  # Payment Date
+                payment_method,  # Payment Method
+                "",  # Liquidation Status
+                "",  # Liquidated Amount
+                "",  # Liquidation Date
+                "",  # Liquidated Invoices
+                "",  # Returned Amount
+                "",  # Related Request ID
+                "",  # Supplier/Donor
+                "",  # Contribution
+                notes,  # Remarks
             ]
-
-            # Debug log to verify the data
-            st.write("Data to append:", new_row)
 
             # Append the data to the Google Sheet
             sheet.append_row(new_row)
-            st.success("Request submitted successfully!")
+            st.success(f"Request submitted successfully! TRX ID: {trx_id}")
         except Exception as e:
             st.error(f"Error submitting request: {e}")
