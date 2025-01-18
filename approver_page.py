@@ -3,6 +3,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
+import pytz  # Ensure pytz is imported for timezone handling
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
