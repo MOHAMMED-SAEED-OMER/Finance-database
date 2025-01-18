@@ -28,12 +28,7 @@ def render_database():
         df = pd.DataFrame(data)
 
         # Show the data
-        st.dataframe(df, height=400)
-
-        # Full-screen option
-        if st.button("View Full Screen"):
-            st.write("Full Database:")
-            st.dataframe(df)
+        st.dataframe(df, height=400)  # Display data with fixed height
 
     except Exception as e:
         st.error(f"Error loading the database: {e}")
