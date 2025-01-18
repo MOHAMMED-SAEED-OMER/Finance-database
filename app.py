@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Logo or header at the top
+# Logo or header at the top (clean navigation bar with no filter button)
 st.markdown(
     """
     <style>
@@ -26,7 +26,7 @@ st.markdown(
     </style>
     <div class="header-container">
         <div class="logo">Finance Database</div>
-        <!-- Add a logo or any other navigation items here -->
+        <!-- Add a logo or other navigation items here if needed -->
     </div>
     """,
     unsafe_allow_html=True,
