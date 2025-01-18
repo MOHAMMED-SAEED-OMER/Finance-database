@@ -24,13 +24,19 @@ def fetch_pending_payments():
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
 
-        # Convert data to DataFrame and filter for pending payments
+        # Convert data to DataFrame
         df = pd.DataFrame(data)
+
+        # Debug: Display fetched column names
+        st.write("Fetched columns:", df.columns.tolist())
+
+        # Filter for pending payments
         pending_payments = df[df["Payment Status"] == "Pending"]
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
+
 
 # Update payment status and date
 def issue_payment(sheet, row_index):
