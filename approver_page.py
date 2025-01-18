@@ -32,16 +32,20 @@ def fetch_pending_requests():
         st.error(f"Error fetching pending requests: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
 
-# Update approval status and date
+# Update approval status, payment status, and dates
 def update_approval(sheet, row_index, status):
     try:
         baghdad_tz = pytz.timezone("Asia/Baghdad")
-        approval_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
+        current_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
         # Update Approval Status
         sheet.update_cell(row_index, 12, status)  # Column 12: Approval Status
         # Update Approval Date
-        sheet.update_cell(row_index, 13, approval_date)  # Column 13: Approval Date
+        sheet.update_cell(row_index, 13, current_date)  # Column 13: Approval Date
+
+        if status == "Approved":
+            # Update Payment Status to "Pending" for approved requests
+            sheet.update_cell(row_index, 14, "Pending")  # Column 14: Payment Status
 
         return True
     except Exception as e:
