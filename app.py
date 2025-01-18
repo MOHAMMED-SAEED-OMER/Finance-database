@@ -4,27 +4,41 @@ import streamlit as st
 st.set_page_config(
     page_title="Finance Database",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
-# Sidebar Navigation with Buttons
-st.sidebar.title("Navigation")
-st.sidebar.markdown("Click a button below to navigate:")
+# Logo or header at the top
+st.markdown(
+    """
+    <style>
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+    <div class="header-container">
+        <div class="logo">Finance Database</div>
+        <!-- Add a logo or any other navigation items here -->
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# Define buttons for page navigation
-if st.sidebar.button("View Database"):
-    st.session_state["page"] = "Database"
-elif st.sidebar.button("Add New Data"):
-    st.session_state["page"] = "Add New Data"
+# Tab-based navigation
+tabs = st.tabs(["Database", "Add New Data"])
 
-# Initialize the session state if not set
-if "page" not in st.session_state:
-    st.session_state["page"] = "Database"
-
-# Dynamically load pages
-if st.session_state["page"] == "Database":
+with tabs[0]:
     from database import render_database
     render_database()
-elif st.session_state["page"] == "Add New Data":
+
+with tabs[1]:
     from add_data import render_add_data
     render_add_data()
