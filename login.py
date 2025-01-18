@@ -3,12 +3,6 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
-from streamlit_cookies_manager import EncryptedCookieManager
-
-# Set up cookie manager
-cookies = EncryptedCookieManager(prefix="finance_app")
-if not cookies.ready():
-    st.stop()
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -49,14 +43,16 @@ def render_login():
     st.title("🔐 Login")
     st.write("Please enter your credentials to log in.")
 
-    # Retrieve saved credentials if available
-    saved_email = cookies.get("saved_email", "")
-    saved_password = cookies.get("saved_password", "")
+    # Use session state to persist credentials
+    if "saved_email" not in st.session_state:
+        st.session_state.saved_email = ""
+    if "saved_password" not in st.session_state:
+        st.session_state.saved_password = ""
 
     # Login form
-    email = st.text_input("Email:", value=saved_email)
-    password = st.text_input("Password:", value=saved_password, type="password")
-    remember_me = st.checkbox("Remember Me", value=bool(saved_email))
+    email = st.text_input("Email:", value=st.session_state.saved_email)
+    password = st.text_input("Password:", value=st.session_state.saved_password, type="password")
+    remember_me = st.checkbox("Remember Me", value=bool(st.session_state.saved_email))
 
     if st.button("Login"):
         if not email or not password:
@@ -88,16 +84,13 @@ def render_login():
             st.session_state["user_email"] = email
             st.session_state["user_role"] = role
 
-            # Save email and password in cookies if "Remember Me" is checked
+            # Save email and password in session state if "Remember Me" is checked
             if remember_me:
-                cookies["saved_email"] = email
-                cookies["saved_password"] = password  # Optionally hash the password before saving
-                cookies.save()
+                st.session_state.saved_email = email
+                st.session_state.saved_password = password
             else:
-                # Clear cookies if "Remember Me" is not checked
-                cookies.delete("saved_email")
-                cookies.delete("saved_password")
-                cookies.save()
+                st.session_state.saved_email = ""
+                st.session_state.saved_password = ""
 
             st.success("Login successful!")
 
