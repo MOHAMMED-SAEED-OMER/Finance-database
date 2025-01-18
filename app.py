@@ -6,39 +6,35 @@ st.set_page_config(
     layout="wide",
 )
 
-# Logo or header at the top (clean navigation bar with no filter button)
-st.markdown(
-    """
-    <style>
-        .header-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-bottom: 1px solid #ddd;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-    </style>
-    <div class="header-container">
-        <div class="logo">Finance Database</div>
-        <!-- Add a logo or other navigation items here if needed -->
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# Initialize session state
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+    st.session_state["user_email"] = None
+    st.session_state["user_role"] = None
 
-# Tab-based navigation
-tabs = st.tabs(["Database", "Add New Data"])
+if not st.session_state["logged_in"]:
+    from login import render_login
+    render_login()
+else:
+    # Sidebar Navigation with Pages
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio(
+        "Go to:",
+        options=["Database", "Add New Data", "User Profiles"]
+    )
 
-with tabs[0]:
-    from database import render_database
-    render_database()
-
-with tabs[1]:
-    from add_data import render_add_data
-    render_add_data()
+    if page == "Database":
+        from database import render_database
+        render_database()
+    elif page == "Add New Data":
+        if st.session_state["user_role"] in ["Admin", "Requester"]:
+            from add_data import render_add_data
+            render_add_data()
+        else:
+            st.warning("You do not have permission to access this page.")
+    elif page == "User Profiles":
+        if st.session_state["user_role"] == "Admin":
+            from user_profiles import render_user_profiles
+            render_user_profiles()
+        else:
+            st.warning("You do not have permission to access this page.")
