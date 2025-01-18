@@ -20,10 +20,10 @@ def fetch_dropdown_options():
         helper_sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Helper")
         helper_data = helper_sheet.get_all_records()
 
-        # Extract project names and payment methods
+        # Extract project names and payment methods, ignoring blanks
         dropdown_options = {
-            "Project Name": [row["Project Name"] for row in helper_data if "Project Name" in row and row["Project Name"]],
-            "Payment Method": [row["Payment Method"] for row in helper_data if "Payment Method" in row and row["Payment Method"]],
+            "Project Name": [row["Project name"] for row in helper_data if "Project name" in row and row["Project name"].strip()],
+            "Payment Method": [row["Payment method"] for row in helper_data if "Payment method" in row and row["Payment method"].strip()],
         }
         return dropdown_options
     except Exception as e:
