@@ -56,40 +56,40 @@ def render_request_form():
     notes = st.text_area("Additional Notes or Remarks:")
 
     # Submit button
-   if st.button("Submit Request"):
-    if not project:
-        st.warning("Please choose a project.")
-        return
-    if not payment_method:
-        st.warning("Please choose a payment method.")
-        return
-    if total_amount >= 0:
-        st.warning("The total amount requested must be negative.")
-        return
+    if st.button("Submit Request"):
+        if not project:
+            st.warning("Please choose a project.")
+            return
+        if not payment_method:
+            st.warning("Please choose a payment method.")
+            return
+        if total_amount >= 0:
+            st.warning("The total amount requested must be negative.")
+            return
 
-    try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        try:
+            client = load_credentials()
+            sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
-        # Prepare the data to append
-        new_row = [
-            "Expense",  # TRX Type
-            "Request based",  # TRX Category
-            budget_line,  # Budget Line
-            project,  # Project Name
-            payment_method,  # Payment Method
-            "To be liquidated",  # Default Liquidation Status
-            purpose,  # Purpose
-            request_details,  # Request Details
-            total_amount,  # Amount
-            notes,  # Notes/Remarks
-        ]
+            # Prepare the data to append
+            new_row = [
+                "Expense",  # TRX Type
+                "Request based",  # TRX Category
+                budget_line,  # Budget Line
+                project,  # Project Name
+                payment_method,  # Payment Method
+                "To be liquidated",  # Default Liquidation Status
+                purpose,  # Purpose
+                request_details,  # Request Details
+                total_amount,  # Amount
+                notes,  # Notes/Remarks
+            ]
 
-        # Debug log to verify the data
-        st.write("Data to append:", new_row)
+            # Debug log to verify the data
+            st.write("Data to append:", new_row)
 
-        # Append the data to the Google Sheet
-        sheet.append_row(new_row)
-        st.success("Request submitted successfully!")
-    except Exception as e:
-        st.error(f"Error submitting request: {e}")
+            # Append the data to the Google Sheet
+            sheet.append_row(new_row)
+            st.success("Request submitted successfully!")
+        except Exception as e:
+            st.error(f"Error submitting request: {e}")
