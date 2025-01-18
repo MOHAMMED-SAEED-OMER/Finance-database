@@ -52,7 +52,3 @@ def update_data(row):
         return jsonify({"status": "success", "message": f"Row {row} updated successfully"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
-# Only run Flask's server if executed directly
-if __name__ == '__main__':
-    app.run(debug=True)
