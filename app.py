@@ -7,12 +7,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Sidebar Navigation
+# Sidebar Navigation with Radio Buttons
 st.sidebar.title("Navigation")
-st.sidebar.markdown("Use the menu below to navigate:")
-page = st.sidebar.selectbox(
-    "Select a page:",
-    ["Database", "Add New Data"]  # Add more pages as needed
+st.sidebar.markdown("Use the buttons below to navigate between pages:")
+
+# Radio button for page selection
+page = st.sidebar.radio(
+    "Go to:",
+    options=["Database", "Add New Data"],  # Add more pages if needed
+    index=0,  # Default to the first page
 )
 
 # Dynamically load pages
