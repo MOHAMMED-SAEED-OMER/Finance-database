@@ -18,11 +18,8 @@ def load_credentials():
 def fetch_user_data():
     try:
         client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")  # Correct tab name
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
         data = sheet.get_all_records()
-
-        # Debug: Show the data headers
-        st.write("Fetched Data Headers:", list(data[0].keys()) if data else "No data available")
 
         # Convert to DataFrame
         df = pd.DataFrame(data)
@@ -37,14 +34,25 @@ def fetch_user_data():
         st.error(f"Error fetching user data: {e}")
         return pd.DataFrame()
 
+# Hash the password
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
 # Render the Login Page
 def render_login():
     st.title("🔐 Login")
     st.write("Please enter your credentials to log in.")
 
+    # Initialize cookies for "Remember Me" functionality
+    if "user_email" not in st.session_state:
+        st.session_state.user_email = st.experimental_get_query_params().get("email", [""])[0]
+    if "user_password" not in st.session_state:
+        st.session_state.user_password = ""
+
     # Login form
-    email = st.text_input("Email:")
-    password = st.text_input("Password:", type="password")
+    email = st.text_input("Email:", value=st.session_state.user_email)
+    password = st.text_input("Password:", value=st.session_state.user_password, type="password")
+    remember_me = st.checkbox("Remember Me")
 
     if st.button("Login"):
         if not email or not password:
@@ -66,7 +74,7 @@ def render_login():
             role = user["Role"]
 
             # Validate password
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            password_hash = hash_password(password)
             if password_hash != hashed_password:
                 st.error("Incorrect password.")
                 return
@@ -75,6 +83,10 @@ def render_login():
             st.session_state["logged_in"] = True
             st.session_state["user_email"] = email
             st.session_state["user_role"] = role
+
+            # Save email and password for "Remember Me"
+            if remember_me:
+                st.experimental_set_query_params(email=email)
 
             st.success("Login successful!")
 
