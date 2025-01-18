@@ -16,8 +16,8 @@ def load_credentials():
 # Render the Database Page
 def render_database():
     st.title("📊 Database Viewer")
-    st.write("This page shows the current database in real-time with some cool features.")
-    
+    st.write("This page shows the current database in real-time.")
+
     try:
         # Authenticate and open the Google Sheet
         client = load_credentials()
@@ -26,15 +26,6 @@ def render_database():
         # Fetch data
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
-
-        # Filter options
-        st.sidebar.subheader("Filters")
-        column_to_filter = st.sidebar.selectbox("Select a column to filter:", options=df.columns)
-        filter_value = st.sidebar.text_input("Enter a value to filter:")
-
-        # Apply filter
-        if column_to_filter and filter_value:
-            df = df[df[column_to_filter].astype(str).str.contains(filter_value, na=False, case=False)]
 
         # Show the data
         st.dataframe(df, height=400)
