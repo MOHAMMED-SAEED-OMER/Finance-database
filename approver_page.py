@@ -3,7 +3,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
-import pytz  # Ensure pytz is imported for timezone handling
+import pytz
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -82,7 +82,8 @@ def render_approver_page():
             success = update_approval(sheet, row_index, "Approved")
             if success:
                 st.success(f"Request {trx_id} has been approved.")
-                st.experimental_rerun()
+                # Refresh page by reloading the URL
+                st.experimental_set_query_params(refresh="true")
 
         if col2.button("Decline"):
             # Find the row index of the selected TRX ID
@@ -90,7 +91,8 @@ def render_approver_page():
             success = update_approval(sheet, row_index, "Declined")
             if success:
                 st.warning(f"Request {trx_id} has been declined.")
-                st.experimental_rerun()
+                # Refresh page by reloading the URL
+                st.experimental_set_query_params(refresh="true")
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
