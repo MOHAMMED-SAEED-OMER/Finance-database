@@ -110,7 +110,7 @@ def render_request_form():
                 request_details,  # Detail
                 total_amount,  # Requested Amount
                 submission_date,  # Request Submission Date
-                "",  # Approval Status
+                "Pending",  # Approval Status (default to Pending)
                 "",  # Approval Date
                 "",  # Payment Status
                 "",  # Payment Date
