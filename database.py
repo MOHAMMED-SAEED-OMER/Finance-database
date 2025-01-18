@@ -23,12 +23,19 @@ def render_database():
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
+        # Check headers for uniqueness
+        headers = sheet.row_values(1)
+        if len(headers) != len(set(headers)):
+            st.error(f"Duplicate headers found: {headers}. Please ensure all headers are unique.")
+            return
+
         # Fetch data
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
 
-        # Show the data
-        st.dataframe(df, height=400)  # Display data with fixed height
+        # Display data
+        st.dataframe(df, height=400)
 
     except Exception as e:
         st.error(f"Error loading the database: {e}")
+
