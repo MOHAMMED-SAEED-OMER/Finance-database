@@ -52,6 +52,10 @@ def render_approver_page():
     st.title("🔎 Approver Page")
     st.write("Review pending requests and approve or decline them.")
 
+    # Initialize session state for page refresh
+    if "refresh" not in st.session_state:
+        st.session_state["refresh"] = False
+
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
@@ -81,18 +85,16 @@ def render_approver_page():
             row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
             success = update_approval(sheet, row_index, "Approved")
             if success:
-                st.success(f"Request {trx_id} has been approved.")
-                # Refresh page by reloading the URL
-                st.set_query_params(refresh="true")
+                st.session_state["refresh"] = True
+                st.experimental_rerun()
 
         if col2.button("Decline"):
             # Find the row index of the selected TRX ID
             row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
             success = update_approval(sheet, row_index, "Declined")
             if success:
-                st.warning(f"Request {trx_id} has been declined.")
-                # Refresh page by reloading the URL
-                st.set_query_params(refresh="true")
+                st.session_state["refresh"] = True
+                st.experimental_rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
