@@ -7,21 +7,24 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Sidebar Navigation with Radio Buttons
+# Sidebar Navigation with Buttons
 st.sidebar.title("Navigation")
-st.sidebar.markdown("Use the buttons below to navigate between pages:")
+st.sidebar.markdown("Click a button below to navigate:")
 
-# Radio button for page selection
-page = st.sidebar.radio(
-    "Go to:",
-    options=["Database", "Add New Data"],  # Add more pages if needed
-    index=0,  # Default to the first page
-)
+# Define buttons for page navigation
+if st.sidebar.button("View Database"):
+    st.session_state["page"] = "Database"
+elif st.sidebar.button("Add New Data"):
+    st.session_state["page"] = "Add New Data"
+
+# Initialize the session state if not set
+if "page" not in st.session_state:
+    st.session_state["page"] = "Database"
 
 # Dynamically load pages
-if page == "Database":
+if st.session_state["page"] == "Database":
     from database import render_database
     render_database()
-elif page == "Add New Data":
+elif st.session_state["page"] == "Add New Data":
     from add_data import render_add_data
     render_add_data()
