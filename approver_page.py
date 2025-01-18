@@ -83,7 +83,7 @@ def render_approver_page():
             if success:
                 st.success(f"Request {trx_id} has been approved.")
                 # Refresh page by reloading the URL
-                st.experimental_set_query_params(refresh="true")
+                st.set_query_params(refresh="true")
 
         if col2.button("Decline"):
             # Find the row index of the selected TRX ID
@@ -92,7 +92,7 @@ def render_approver_page():
             if success:
                 st.warning(f"Request {trx_id} has been declined.")
                 # Refresh page by reloading the URL
-                st.experimental_set_query_params(refresh="true")
+                st.set_query_params(refresh="true")
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
