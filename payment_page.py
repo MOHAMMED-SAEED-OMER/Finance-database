@@ -37,12 +37,12 @@ def issue_payment(sheet, row_index):
         baghdad_tz = pytz.timezone("Asia/Baghdad")
         payment_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        # Update Payment Status
-        sheet.update_cell(row_index, 14, "Issued")  # Column 14: Payment Status
-        # Update Payment Date
-        sheet.update_cell(row_index, 15, payment_date)  # Column 15: Payment Date
-        # Update Liquidation Status
-        sheet.update_cell(row_index, 16, "To be liquidated")  # Column 16: Liquidation Status
+        # Update Payment Status (Column 14)
+        sheet.update_cell(row_index, 14, "Issued")
+        # Update Payment Date (Column 15)
+        sheet.update_cell(row_index, 15, payment_date)
+        # Update Liquidation Status (Column 17 - FIXED)
+        sheet.update_cell(row_index, 17, "To be liquidated")
 
         return True
     except Exception as e:
