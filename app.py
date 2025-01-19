@@ -20,7 +20,15 @@ else:
     st.sidebar.title("Navigation")
     page = st.sidebar.radio(
         "Go to:",
-        options=["Database", "Add New Data", "Submit a Request", "Approver", "Payment", "User Profiles"]
+        options=[
+            "Database",
+            "Add New Data",
+            "Submit a Request",
+            "Approver",
+            "Payment",
+            "Liquidation",
+            "User Profiles"
+        ]
     )
 
     if page == "Database":
@@ -55,16 +63,16 @@ else:
         else:
             st.warning("You do not have permission to access this page.")
 
+    elif page == "Liquidation":
+        if st.session_state["user_role"] == "Admin":
+            from liquidation_page import render_liquidation_page
+            render_liquidation_page()
+        else:
+            st.warning("You do not have permission to access this page.")
+
     elif page == "User Profiles":
         if st.session_state["user_role"] == "Admin":
             from user_profiles import render_user_profiles
             render_user_profiles()
         else:
             st.warning("You do not have permission to access this page.")
-            
-elif page == "Liquidation":
-    if st.session_state["user_role"] in ["Admin"]:
-        from liquidation_page import render_liquidation_page
-        render_liquidation_page()
-    else:
-        st.warning("You do not have permission to access this page.")
