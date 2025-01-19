@@ -61,3 +61,10 @@ else:
             render_user_profiles()
         else:
             st.warning("You do not have permission to access this page.")
+            
+elif page == "Liquidation":
+    if st.session_state["user_role"] in ["Admin"]:
+        from liquidation_page import render_liquidation_page
+        render_liquidation_page()
+    else:
+        st.warning("You do not have permission to access this page.")
