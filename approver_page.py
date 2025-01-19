@@ -25,28 +25,42 @@ def fetch_pending_requests():
 
         # Convert data to DataFrame and filter for pending requests
         df = pd.DataFrame(data)
-        pending_requests = df[df["Approval Status"] == "Pending"]
+        pending_requests = df[df["Approval Status"].str.lower() == "pending"]
         return pending_requests
     except Exception as e:
         st.error(f"Error fetching pending requests: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
 
 # Update approval status, payment status, and dates
-def update_approval(sheet, row_index, status):
+def update_approval(sheet, trx_id, status):
     try:
         baghdad_tz = pytz.timezone("Asia/Baghdad")
         current_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        # Update Approval Status
-        sheet.update_cell(row_index, 12, status)  # Column 12: Approval Status
-        # Update Approval Date
-        sheet.update_cell(row_index, 13, current_date)  # Column 13: Approval Date
+        # Get all data to find the row index
+        data = sheet.get_all_values()
+        headers = data[0]  # Get headers to identify column positions
+        trx_id_col = headers.index("TRX ID") + 1  # Get TRX ID column position
 
-        if status == "Approved":
-            # Update Payment Status to "Pending" for approved requests
-            sheet.update_cell(row_index, 14, "Pending")  # Column 14: Payment Status
+        # Find the row with the matching TRX ID
+        for i, row in enumerate(data):
+            if row[trx_id_col - 1] == trx_id:
+                row_index = i + 1  # Google Sheets row is 1-based index
 
-        return True
+                # Update the approval status and date
+                approval_status_col = headers.index("Approval Status") + 1
+                approval_date_col = headers.index("Approval date") + 1
+                payment_status_col = headers.index("Payment status") + 1
+
+                sheet.update_cell(row_index, approval_status_col, status)
+                sheet.update_cell(row_index, approval_date_col, current_date)
+
+                if status == "Approved":
+                    sheet.update_cell(row_index, payment_status_col, "Pending")  # Set payment to pending
+
+                return True
+        st.error("TRX ID not found in the database.")
+        return False
     except Exception as e:
         st.error(f"Error updating approval status: {e}")
         return False
@@ -85,22 +99,18 @@ def render_approver_page():
         col1, col2 = st.columns(2)
 
         if col1.button("Approve"):
-            # Find the row index of the selected TRX ID
-            row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
-            success = update_approval(sheet, row_index, "Approved")
+            success = update_approval(sheet, trx_id, "Approved")
             if success:
                 st.session_state["approved_request"] = trx_id
                 st.success(f"Request {trx_id} has been approved.")
-                st.rerun()  # Proper rerun without logout issue
+                st.rerun()  # Refresh page
 
         if col2.button("Decline"):
-            # Find the row index of the selected TRX ID
-            row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
-            success = update_approval(sheet, row_index, "Declined")
+            success = update_approval(sheet, trx_id, "Declined")
             if success:
                 st.session_state["approved_request"] = trx_id
                 st.warning(f"Request {trx_id} has been declined.")
-                st.rerun()  # Proper rerun without logout issue
+                st.rerun()  # Refresh page
 
         # Display a message if a request was recently processed
         if st.session_state["approved_request"]:
