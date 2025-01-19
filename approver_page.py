@@ -4,7 +4,6 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
 import pytz
-import time  # For delayed reload
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -57,6 +56,10 @@ def render_approver_page():
     st.title("🔎 Approver Page")
     st.write("Review pending requests and approve or decline them.")
 
+    # Session state to track approved/declined requests
+    if "approved_request" not in st.session_state:
+        st.session_state["approved_request"] = None
+
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
@@ -86,18 +89,22 @@ def render_approver_page():
             row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
             success = update_approval(sheet, row_index, "Approved")
             if success:
+                st.session_state["approved_request"] = trx_id
                 st.success(f"Request {trx_id} has been approved.")
-                time.sleep(1)  # Delay for user feedback
-                st.write('<meta http-equiv="refresh" content="0; url=." />', unsafe_allow_html=True)
+                st.rerun()  # Proper rerun without logout issue
 
         if col2.button("Decline"):
             # Find the row index of the selected TRX ID
             row_index = pending_requests[pending_requests["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
             success = update_approval(sheet, row_index, "Declined")
             if success:
+                st.session_state["approved_request"] = trx_id
                 st.warning(f"Request {trx_id} has been declined.")
-                time.sleep(1)  # Delay for user feedback
-                st.write('<meta http-equiv="refresh" content="0; url=." />', unsafe_allow_html=True)
+                st.rerun()  # Proper rerun without logout issue
+
+        # Display a message if a request was recently processed
+        if st.session_state["approved_request"]:
+            st.info(f"Recently processed request: {st.session_state['approved_request']}")
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
