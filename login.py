@@ -39,75 +39,69 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 # Custom CSS for styling improvements
-st.markdown(
-    """
-    <style>
-        .header {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #1E3A8A;
-            text-align: center;
-            margin-bottom: 30px;
-            font-family: 'Arial', sans-serif;
-        }
-        .login-container {
-            max-width: 450px;
-            margin: auto;
-            padding: 2rem;
-            background: linear-gradient(to bottom, #f0f4ff, #ffffff);
-            border-radius: 15px;
-            box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-        .login-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #1E3A8A;
-            margin-bottom: 10px;
-            font-family: 'Arial', sans-serif;
-        }
-        .instructions {
-            font-size: 1rem;
-            color: #374151;
-            margin-bottom: 20px;
-            text-align: left;
-            line-height: 1.5;
-            font-family: 'Arial', sans-serif;
-        }
-        .btn-login {
-            background-color: #1E3A8A;
-            color: #ffffff;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 1.2rem;
-            width: 100%;
-            border: none;
-            font-family: 'Arial', sans-serif;
-        }
-        .btn-login:hover {
-            background-color: #3B82F6;
-        }
-        .footer {
-            font-size: 0.9rem;
-            color: #374151;
-            text-align: center;
-            margin-top: 20px;
-            font-family: 'Arial', sans-serif;
-        }
-        .input-field input {
-            font-size: 1rem !important;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            width: 100%;
-            font-family: 'Arial', sans-serif;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+def set_custom_css():
+    st.markdown(
+        """
+        <style>
+            .header {
+                font-size: 3rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                text-align: center;
+                margin-bottom: 30px;
+                font-family: 'Arial', sans-serif;
+            }
+            .login-container {
+                max-width: 450px;
+                margin: auto;
+                padding: 2rem;
+                background: linear-gradient(to bottom, #f0f4ff, #ffffff);
+                border-radius: 15px;
+                box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            }
+            .login-title {
+                font-size: 1.8rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                margin-bottom: 10px;
+                font-family: 'Arial', sans-serif;
+            }
+            .instructions {
+                font-size: 1rem;
+                color: #374151;
+                margin-bottom: 20px;
+                text-align: left;
+                line-height: 1.5;
+                font-family: 'Arial', sans-serif;
+            }
+            .btn-login {
+                background-color: #1E3A8A;
+                color: #ffffff;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 1.2rem;
+                width: 100%;
+                border: none;
+                font-family: 'Arial', sans-serif;
+            }
+            .btn-login:hover {
+                background-color: #3B82F6;
+            }
+            .footer {
+                font-size: 0.9rem;
+                color: #374151;
+                text-align: center;
+                margin-top: 20px;
+                font-family: 'Arial', sans-serif;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 def render_login():
+    set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown("<div class='login-title'>Sign in to Your Account</div>", unsafe_allow_html=True)
@@ -131,12 +125,18 @@ def render_login():
         st.query_params.update({"page": "database"})
         return
 
+    # Use session state to store login inputs
+    if "email" not in st.session_state:
+        st.session_state.email = ""
+    if "password" not in st.session_state:
+        st.session_state.password = ""
+
     # Login form
-    email = st.text_input("📧 Email", placeholder="Enter your email", key="email_input")
-    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password", key="password_input")
+    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email")
+    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password")
     remember_me = st.checkbox("Keep me signed in")
 
-    if st.button("Sign In", use_container_width=True, key="login_button"):
+    if st.button("Sign In", use_container_width=True):
         if not email or not password:
             st.warning("Please fill out all fields.")
             return
@@ -169,8 +169,11 @@ def render_login():
             # Save session state if "Remember Me" is checked
             if remember_me:
                 st.session_state["keep_signed_in"] = True
+                st.session_state.email = email
+                st.session_state.password = password
             else:
-                st.session_state["keep_signed_in"] = False
+                st.session_state.email = ""
+                st.session_state.password = ""
 
             st.success("✅ Login successful! Redirecting...")
 
