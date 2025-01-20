@@ -1,5 +1,9 @@
-import gspread
 import streamlit as st
+
+# Set page configuration must be the first Streamlit command
+st.set_page_config(page_title="Hasar Organization", layout="wide")
+
+import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
@@ -48,8 +52,6 @@ def display_random_image():
 
 # Render the Login Page
 def render_login():
-    st.set_page_config(page_title="Hasar Organization", layout="wide")
-
     # Split the screen into two columns
     col1, col2 = st.columns([1, 1])
 
@@ -126,7 +128,7 @@ def render_login():
                 st.success("Login successful!")
 
                 # Redirect to the database page after successful login
-                st.switch_page("app.py")
+                st.query_params(page="database")
 
             except Exception as e:
                 st.error(f"Error during login: {e}")
