@@ -15,7 +15,7 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch dropdown options from the Helper tab
-@st.cache_data(ttl=60)  # Cache for 60 seconds
+@st.cache_data(ttl=60)
 def fetch_dropdown_options():
     try:
         client = load_credentials()
@@ -37,7 +37,7 @@ def generate_trx_id(sheet):
     try:
         all_rows = sheet.get_all_records()
         if all_rows:
-            last_trx_id = all_rows[-1].get("TRX ID", "TRX-0000")  # Default if no TRX ID exists
+            last_trx_id = all_rows[-1].get("TRX ID", "TRX-0000")
             next_id_number = int(last_trx_id.split("-")[1]) + 1
             return f"TRX-{next_id_number:04d}"
         else:
@@ -48,8 +48,51 @@ def generate_trx_id(sheet):
 
 # Render the Request Submission Page
 def render_request_form():
-    st.title("📝 Submit a Request")
-    st.write("Request funds for a project by filling out the form below.")
+    st.markdown(
+        """
+        <style>
+            .request-header {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .request-container {
+                max-width: 800px;
+                margin: auto;
+                padding: 2rem;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+            }
+            .request-subtitle {
+                font-size: 1.2rem;
+                color: #374151;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .submit-btn {
+                background-color: #1E3A8A;
+                color: white;
+                border-radius: 5px;
+                padding: 12px;
+                font-size: 1.2rem;
+                width: 100%;
+                border: none;
+                cursor: pointer;
+            }
+            .submit-btn:hover {
+                background-color: #3B82F6;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='request-header'>Requests</div>", unsafe_allow_html=True)
+    st.markdown("<div class='request-container'>", unsafe_allow_html=True)
+    st.markdown("<div class='request-subtitle'>Request funds here</div>", unsafe_allow_html=True)
 
     # Fetch dropdown options
     dropdown_options = fetch_dropdown_options()
@@ -62,20 +105,49 @@ def render_request_form():
         st.warning("No payment methods found in the Helper tab. Please add payment methods.")
         return
 
-    # Form fields
-    project = st.selectbox("Choose a Project:", options=[""] + dropdown_options["Project Name"])
-    payment_method = st.selectbox("Choose Payment Method:", options=[""] + dropdown_options["Payment Method"])
-    budget_line = st.text_input("Write the Budget Line:")
-    purpose = st.text_area("Explain the Purpose of Your Request:")
-    request_details = st.text_area("Request Details (e.g., cost breakdown):")
-    total_amount = st.number_input("Total Amount Requested (negative for expense):", value=0.0, step=0.01)
-    notes = st.text_area("Additional Notes or Remarks:")
+    # Form fields with tooltips
+    project = st.selectbox(
+        "Choose a Project:",
+        options=[""] + dropdown_options["Project Name"],
+        help="Select the project you are requesting funds for."
+    )
+    payment_method = st.selectbox(
+        "Choose Payment Method:",
+        options=[""] + dropdown_options["Payment Method"],
+        help="Select the payment method you prefer (e.g., cash, bank transfer)."
+    )
+    budget_line = st.text_input(
+        "Budget Line:",
+        placeholder="Enter the budget line number",
+        help="Provide the budget line number related to this request."
+    )
+    purpose = st.text_area(
+        "Purpose of Request:",
+        placeholder="Describe the purpose of the request",
+        help="Provide a brief description of the reason for requesting funds."
+    )
+    request_details = st.text_area(
+        "Request Details:",
+        placeholder="Provide a cost breakdown (e.g., item1: $50, item2: $30)",
+        help="Include detailed breakdown of items and costs."
+    )
+    total_amount = st.number_input(
+        "Total Amount Requested (negative for expense):",
+        value=0.0,
+        step=0.01,
+        help="Enter the total requested amount as a negative number (e.g., -1000 for expenses)."
+    )
+    notes = st.text_area(
+        "Additional Notes or Remarks:",
+        placeholder="Enter any additional information (optional)",
+        help="Include any additional details or remarks about your request."
+    )
 
     # Get the requester name from session state
     requester_name = st.session_state.get("user_email", "Unknown")
 
     # Submit button
-    if st.button("Submit Request"):
+    if st.button("Submit Request", key="submit_request", use_container_width=True):
         if not project:
             st.warning("Please choose a project.")
             return
@@ -99,36 +171,11 @@ def render_request_form():
 
             # Prepare the data to append
             new_row = [
-                trx_id,  # TRX ID
-                "Expense",  # TRX Type
-                "Project expense",  # TRX Category
-                "Request based",  # Request/Direct
-                requester_name,  # Requester Name
-                project,  # Project Name
-                budget_line,  # Budget Line
-                purpose,  # Purpose
-                request_details,  # Detail
-                total_amount,  # Requested Amount
-                submission_date,  # Request Submission Date
-                "Pending",  # Approval Status
-                "",  # Approval Date
-                "",  # Payment Status
-                "",  # Payment Date
-                payment_method,  # Payment Method
-                "",  # Liquidation Status
-                "",  # Liquidated Amount
-                "",  # Liquidation Date
-                "",  # Liquidated Invoices
-                "",  # Returned Amount
-                "",  # Related Request ID
-                "",  # Supplier/Donor
-                "",  # Contribution
-                notes,  # Remarks
+                trx_id, "Expense", "Project expense", "Request based", requester_name,
+                project, budget_line, purpose, request_details, total_amount,
+                submission_date, "Pending", "", "", "", payment_method,
+                "", "", "", "", "", "", "", "", notes
             ]
-
-            # Debug: Print the new_row data
-            st.write("Appending the following data to the Google Sheet:")
-            st.write(new_row)
 
             # Append the data to the Google Sheet
             sheet.append_row(new_row)
@@ -136,3 +183,5 @@ def render_request_form():
             st.success(f"Request submitted successfully! TRX ID: {trx_id}")
         except Exception as e:
             st.error(f"Error submitting request: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
