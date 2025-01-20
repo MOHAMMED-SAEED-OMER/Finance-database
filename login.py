@@ -82,7 +82,7 @@ def render_login():
         unsafe_allow_html=True
     )
 
-    st.image("https://www.hasar.org/logo.png", use_column_width=True)
+    st.image("https://www.hasar.org/logo.png", use_container_width=True)
 
     st.markdown("## 🔐 Login")
 
@@ -138,7 +138,7 @@ def render_login():
             st.success("Login successful! Redirecting...")
 
             # Redirect to the main app
-            st.experimental_set_query_params(page="database")
+            st.query_params(page="database")
 
         except Exception as e:
             st.error(f"Error during login: {e}")
