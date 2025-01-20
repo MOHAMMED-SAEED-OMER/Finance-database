@@ -38,76 +38,71 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Render the Login Page
-def render_login():
-    st.markdown(
-        """
-        <style>
-            body {
-                background-color: #1E3A8A;
-                color: #ffffff;
-                font-family: 'Arial', sans-serif;
-            }
-            .stApp {
-                background-color: #1E3A8A;
-            }
-            .login-container {
-                max-width: 450px;
-                margin: 5% auto;
-                padding: 2rem;
-                background: #ffffff;
-                border-radius: 12px;
-                box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
-                text-align: center;
-            }
-            .login-title {
-                font-size: 2rem;
-                font-weight: bold;
-                color: #1E3A8A;
-                margin-bottom: 10px;
-            }
-            .login-subtitle {
-                font-size: 1.2rem;
-                font-weight: normal;
-                color: #374151;
-                margin-bottom: 20px;
-            }
-            .stTextInput>div>div>input {
-                text-align: center;
-            }
-            .btn-login {
-                background-color: #1E3A8A;
-                color: #ffffff;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 1.1rem;
-                width: 100%;
-                border: none;
-            }
-            .btn-login:hover {
-                background-color: #3B82F6;
-            }
-            .checkbox-label {
-                color: #000000;
-                font-size: 1rem;
-            }
-            .footer {
-                font-size: 0.9rem;
-                color: #E5E7EB;
-                text-align: center;
-                margin-top: 20px;
-            }
-            .st-emotion-cache-1kyxreq {
-                display: none;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+# Custom CSS for better styling and removing white space
+st.markdown(
+    """
+    <style>
+        body {
+            background-color: #1E3A8A;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+        .stApp {
+            background-color: #1E3A8A;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            max-width: 450px;
+            margin: auto;
+            padding: 2rem;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .login-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1E3A8A;
+            margin-bottom: 10px;
+        }
+        .login-subtitle {
+            font-size: 1.2rem;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            background-color: #1E3A8A;
+            color: #ffffff;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 1.1rem;
+            width: 100%;
+            border: none;
+        }
+        .btn-login:hover {
+            background-color: #3B82F6;
+        }
+        .footer {
+            font-size: 0.9rem;
+            color: #E5E7EB;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
+def render_login():
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Welcome Back!</div>", unsafe_allow_html=True)
-    st.markdown("<div class='login-subtitle'>Secure access to your finance dashboard</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-title'>Sign in to Hasar Portal</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-subtitle'>Empowering Climate Action</div>", unsafe_allow_html=True)
 
     # Use session state to persist credentials
     if "saved_email" not in st.session_state:
