@@ -30,36 +30,19 @@ def fetch_pending_requests():
         st.error(f"Error fetching pending requests: {e}")
         return pd.DataFrame()
 
-# Fetch past (approved/declined) requests
-@st.cache_data(ttl=60)
-def fetch_past_requests():
-    try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
-        data = sheet.get_all_records()
-
-        df = pd.DataFrame(data)
-        past_requests = df[df["Approval Status"].str.lower().isin(["approved", "declined"])]
-        return past_requests
-    except Exception as e:
-        st.error(f"Error fetching past requests: {e}")
-        return pd.DataFrame()
-
-# Update approval status in the database
+# Update approval status
 def update_approval(sheet, trx_id, status):
     try:
         baghdad_tz = pytz.timezone("Asia/Baghdad")
         current_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        # Get all data to find the row index
         data = sheet.get_all_values()
         headers = data[0]
         trx_id_col = headers.index("TRX ID") + 1
 
         for i, row in enumerate(data):
             if row[trx_id_col - 1] == trx_id:
-                row_index = i + 1  # Google Sheets row is 1-based index
-
+                row_index = i + 1
                 approval_status_col = headers.index("Approval Status") + 1
                 approval_date_col = headers.index("Approval date") + 1
                 payment_status_col = headers.index("Payment status") + 1
@@ -77,109 +60,39 @@ def update_approval(sheet, trx_id, status):
         st.error(f"Error updating approval status: {e}")
         return False
 
-# Render the Approver Page
+# Render Approver Page
 def render_approver_page():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Approver Panel</h2>", unsafe_allow_html=True)
+    st.title("Approver Panel")
     st.write("Review and approve or decline funding requests.")
-
-    # Custom CSS for styling
-    st.markdown("""
-        <style>
-            .request-card {
-                border: 2px solid #1E3A8A;
-                border-radius: 15px;
-                padding: 20px;
-                margin-bottom: 20px;
-                background-color: #F8F9FA;
-                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-            }
-            .request-header {
-                font-size: 1.4rem;
-                font-weight: bold;
-                color: #1E3A8A;
-                margin-bottom: 5px;
-            }
-            .request-detail {
-                font-size: 1rem;
-                color: #333333;
-                margin-bottom: 10px;
-            }
-            .amount {
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #D32F2F;
-            }
-            .approve-btn, .decline-btn {
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-            }
-            .approve-btn {
-                background-color: #1E3A8A;
-                color: white;
-            }
-            .approve-btn:hover {
-                background-color: #3B82F6;
-            }
-            .decline-btn {
-                background-color: #D32F2F;
-                color: white;
-            }
-            .decline-btn:hover {
-                background-color: #B71C1C;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Tabs for Pending and Past Requests
-    tab1, tab2 = st.tabs(["Pending Requests", "Past Requests"])
 
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        pending_requests = fetch_pending_requests()
 
-        # Pending Requests Tab
-        with tab1:
-            pending_requests = fetch_pending_requests()
+        if pending_requests.empty:
+            st.info("No pending requests to review.")
+            return
 
-            if pending_requests.empty:
-                st.info("No pending requests to review.")
-                return
+        for index, request in pending_requests.iterrows():
+            with st.expander(f"Request ID: {request['TRX ID']} - {request['Project name']}"):
+                st.write(f"**Budget Line:** {request['Budget line']}")
+                st.write(f"**Purpose:** {request['Purpose']}")
+                st.write(f"**Requested Amount:** {int(request['Requested Amount']):,} IQD")
+                st.write(f"**Submission Date:** {request['Request submission date']}")
 
-            for index, request in pending_requests.iterrows():
-                with st.container():
-                    st.markdown("<div class='request-card'>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='request-header'>Project: {request['Project name']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='request-detail'><b>TRX ID:</b> {request['TRX ID']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='request-detail'><b>Budget Line:</b> {request['Budget line']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='request-detail'><b>Purpose:</b> {request['Purpose']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='amount'>Requested Amount: {int(request['Requested Amount']):,} IQD</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='request-detail'><b>Submission Date:</b> {request['Request submission date']}</div>", unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
+                    if st.confirm("Are you sure you want to approve this request?"):
+                        update_approval(sheet, request["TRX ID"], "Approved")
+                        st.success(f"Request {request['TRX ID']} approved.")
+                        st.rerun()
 
-                    col1, col2 = st.columns(2)
-                    if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
-                        if st.confirm("Are you sure you want to approve this request?"):
-                            update_approval(sheet, request["TRX ID"], "Approved")
-                            st.success(f"Request {request['TRX ID']} approved.")
-                            st.rerun()
-
-                    if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
-                        if st.confirm("Are you sure you want to decline this request?"):
-                            update_approval(sheet, request["TRX ID"], "Declined")
-                            st.warning(f"Request {request['TRX ID']} declined.")
-                            st.rerun()
-
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-        # Past Requests Tab
-        with tab2:
-            past_requests = fetch_past_requests()
-            if past_requests.empty:
-                st.info("No past requests available.")
-                return
-            st.dataframe(past_requests)
+                if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
+                    if st.confirm("Are you sure you want to decline this request?"):
+                        update_approval(sheet, request["TRX ID"], "Declined")
+                        st.warning(f"Request {request['TRX ID']} declined.")
+                        st.rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
