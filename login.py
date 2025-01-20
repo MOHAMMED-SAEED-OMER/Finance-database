@@ -61,9 +61,15 @@ def render_login():
                 text-align: center;
             }
             .login-title {
-                font-size: 2.5rem;
+                font-size: 2rem;
                 font-weight: bold;
                 color: #1E3A8A;
+                margin-bottom: 10px;
+            }
+            .login-subtitle {
+                font-size: 1.2rem;
+                font-weight: normal;
+                color: #374151;
                 margin-bottom: 20px;
             }
             .stTextInput>div>div>input {
@@ -91,15 +97,17 @@ def render_login():
                 text-align: center;
                 margin-top: 20px;
             }
+            .st-emotion-cache-1kyxreq {
+                display: none;
+            }
         </style>
         """,
         unsafe_allow_html=True
     )
 
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Hasar Organization</div>", unsafe_allow_html=True)
-
-    st.markdown("## 🔐 Login")
+    st.markdown("<div class='login-title'>Welcome Back!</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-subtitle'>Secure access to your finance dashboard</div>", unsafe_allow_html=True)
 
     # Use session state to persist credentials
     if "saved_email" not in st.session_state:
@@ -111,7 +119,7 @@ def render_login():
         email = st.text_input("Email:", value=st.session_state.saved_email, placeholder="Enter your email")
         password = st.text_input("Password:", value=st.session_state.saved_password, placeholder="Enter your password", type="password")
         remember_me = st.checkbox("Keep me signed in", key="remember_me")
-        submit_button = st.form_submit_button("Login", use_container_width=True)
+        submit_button = st.form_submit_button("Sign In", use_container_width=True)
 
     if submit_button:
         if not email or not password:
