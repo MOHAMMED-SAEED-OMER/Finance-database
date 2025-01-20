@@ -22,7 +22,10 @@ def fetch_user_data():
         sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
         data = sheet.get_all_records()
 
+        # Convert to DataFrame
         df = pd.DataFrame(data)
+
+        # Ensure expected columns exist
         required_columns = {"Email", "Password", "Role"}
         if not required_columns.issubset(df.columns):
             raise ValueError(f"The Users sheet must include the following columns: {required_columns}")
@@ -36,100 +39,74 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Social Media Links
-social_links = {
-    "🌐 Website": "https://www.hasar.org",
-    "📘 Facebook": "https://www.facebook.com/HasarOrganization",
-    "📷 Instagram": "https://www.instagram.com/HasarOrg",
-    "🐦 Twitter": "https://twitter.com/HasarOrg",
-    "🔗 LinkedIn": "https://www.linkedin.com/company/hasarorg"
-}
+# Function to display a random image from Lorem Picsum
+def display_random_image():
+    width = 400
+    height = 500
+    image_url = f"https://picsum.photos/{width}/{height}?random={time.time()}"  # Unique image every refresh
+    st.image(image_url, use_column_width=True)
 
-# List of image URLs for slideshow (replace with actual URLs or local paths)
-image_urls = [
-    "https://www.hasar.org/images/project1.jpg",
-    "https://www.hasar.org/images/project2.jpg",
-    "https://www.hasar.org/images/project3.jpg"
-]
-
+# Render the Login Page
 def render_login():
-    st.markdown(
-        """
-        <style>
-            .header { 
-                font-size: 2.5rem; 
-                font-weight: bold; 
-                color: #1E3A8A; 
-                text-align: center; 
-                margin-bottom: 20px; 
-            }
-            .instructions { 
-                font-size: 1rem; 
-                color: #374151; 
-                margin-bottom: 20px; 
-                text-align: left; 
-            }
-            .footer { 
-                font-size: 0.9rem; 
-                color: #374151; 
-                text-align: center; 
-                margin-top: 20px; 
-            }
-            .social-links a { 
-                text-decoration: none; 
-                color: #1E3A8A; 
-                font-size: 1.2rem; 
-                margin-right: 20px; 
-            }
-        </style>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.set_page_config(page_title="Hasar Organization", layout="wide")
 
-    col1, col2 = st.columns([1.5, 1])  # Left and right sections
+    # Split the screen into two columns
+    col1, col2 = st.columns([1, 1])
 
-    # Left Side - Image Slideshow and Social Media Links
+    # Left column for dynamic images and social media links
     with col1:
-        st.markdown("<div class='header'>Welcome to Hasar Organization</div>", unsafe_allow_html=True)
+        st.markdown("## Welcome to Hasar Organization")
+        st.markdown("### Inspiring Change Through Climate Action")
+        
+        # Display dynamic images
+        display_random_image()
 
-        # Image slideshow (cycling through images every 5 seconds)
-        placeholder = st.empty()
-        for img_url in image_urls:
-            placeholder.image(img_url, use_container_width=True)
-            time.sleep(5)
+        # Add social media links
+        st.markdown("### Connect with Us")
+        st.markdown("[🌐 Website](https://www.hasar.org)")
+        st.markdown("[📘 Facebook](https://www.facebook.com/HasarOrganization)")
+        st.markdown("[📷 Instagram](https://www.instagram.com/HasarOrg)")
+        st.markdown("[🐦 Twitter](https://twitter.com/HasarOrg)")
+        st.markdown("[💼 LinkedIn](https://www.linkedin.com/company/hasarorg)")
 
-        # Social Media Links
-        st.markdown("<div class='social-links'><strong>Follow us:</strong></div>", unsafe_allow_html=True)
-        for name, url in social_links.items():
-            st.markdown(f"[{name}]({url})")
-
-    # Right Side - Login Form
+    # Right column for login form
     with col2:
-        st.markdown("<div class='header'>Login</div>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>🔐 Secure Login</h2>", unsafe_allow_html=True)
+        st.write("Please enter your credentials to access the finance management system.")
 
-        # Login form fields
-        email = st.text_input("Email:", placeholder="Enter your email")
-        password = st.text_input("Password:", placeholder="Enter your password", type="password")
-        remember_me = st.checkbox("Keep me signed in")
+        # Store login inputs in session state
+        if "saved_email" not in st.session_state:
+            st.session_state.saved_email = ""
+        if "saved_password" not in st.session_state:
+            st.session_state.saved_password = ""
 
-        if st.button("Sign In"):
+        # Login form inputs
+        email = st.text_input("Email:", value=st.session_state.saved_email, placeholder="Enter your email")
+        password = st.text_input("Password:", value=st.session_state.saved_password, type="password", placeholder="Enter your password")
+        keep_signed_in = st.checkbox("Keep me signed in")
+
+        if st.button("Login"):
             if not email or not password:
                 st.warning("Please fill out all fields.")
                 return
 
             try:
+                # Fetch users from Google Sheets
                 users = fetch_user_data()
-                user = users[users["Email"].str.lower() == email.lower()]
+                user = users[users["Email"] == email]
 
                 if user.empty:
                     st.error("User not found.")
                     return
 
+                # Get the first matching user
                 user = user.iloc[0]
                 hashed_password = user["Password"]
                 role = user["Role"]
 
-                if hash_password(password) != hashed_password:
+                # Validate password
+                password_hash = hash_password(password)
+                if password_hash != hashed_password:
                     st.error("Incorrect password.")
                     return
 
@@ -138,16 +115,21 @@ def render_login():
                 st.session_state["user_email"] = email
                 st.session_state["user_role"] = role
 
-                # Keep session state
-                if remember_me:
-                    st.session_state["keep_signed_in"] = True
+                # Save email and password in session state if "Keep me signed in" is checked
+                if keep_signed_in:
+                    st.session_state.saved_email = email
+                    st.session_state.saved_password = password
                 else:
-                    st.session_state["keep_signed_in"] = False
+                    st.session_state.saved_email = ""
+                    st.session_state.saved_password = ""
 
-                st.success("Login successful! Redirecting...")
-                st.query_params.update({"page": "database"})
+                st.success("Login successful!")
+
+                # Redirect to the database page after successful login
+                st.switch_page("app.py")
 
             except Exception as e:
                 st.error(f"Error during login: {e}")
 
-        st.markdown("<div class='footer'>© 2025 Hasar Organization</div>", unsafe_allow_html=True)
+if __name__ == "__main__":
+    render_login()
