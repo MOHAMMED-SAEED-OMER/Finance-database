@@ -15,22 +15,37 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch all pending requests
+# Fetch pending requests
 @st.cache_data(ttl=60)
 def fetch_pending_requests():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
-        
+
         df = pd.DataFrame(data)
         pending_requests = df[df["Approval Status"].str.lower() == "pending"]
         return pending_requests
     except Exception as e:
         st.error(f"Error fetching pending requests: {e}")
-        return pd.DataFrame()  # Return empty DataFrame on error
+        return pd.DataFrame()
 
-# Update approval status
+# Fetch past (approved/declined) requests
+@st.cache_data(ttl=60)
+def fetch_past_requests():
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        data = sheet.get_all_records()
+
+        df = pd.DataFrame(data)
+        past_requests = df[df["Approval Status"].str.lower().isin(["approved", "declined"])]
+        return past_requests
+    except Exception as e:
+        st.error(f"Error fetching past requests: {e}")
+        return pd.DataFrame()
+
+# Update approval status in the database
 def update_approval(sheet, trx_id, status):
     try:
         baghdad_tz = pytz.timezone("Asia/Baghdad")
@@ -94,14 +109,16 @@ def render_approver_page():
                 font-weight: bold;
                 color: #D32F2F;
             }
+            .approve-btn, .decline-btn {
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+            }
             .approve-btn {
                 background-color: #1E3A8A;
                 color: white;
-                border-radius: 5px;
-                padding: 10px 20px;
-                border: none;
-                font-size: 16px;
-                cursor: pointer;
             }
             .approve-btn:hover {
                 background-color: #3B82F6;
@@ -109,11 +126,6 @@ def render_approver_page():
             .decline-btn {
                 background-color: #D32F2F;
                 color: white;
-                border-radius: 5px;
-                padding: 10px 20px;
-                border: none;
-                font-size: 16px;
-                cursor: pointer;
             }
             .decline-btn:hover {
                 background-color: #B71C1C;
@@ -137,38 +149,36 @@ def render_approver_page():
                 return
 
             for index, request in pending_requests.iterrows():
-                st.markdown("<div class='request-card'>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-header'>Project: {request['Project name']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-detail'><b>TRX ID:</b> {request['TRX ID']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-detail'><b>Budget Line:</b> {request['Budget line']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-detail'><b>Purpose:</b> {request['Purpose']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-detail'><b>Details:</b> {request['Detail']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='amount'>Requested Amount: {int(request['Requested Amount']):,} IQD</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='request-detail'><b>Submission Date:</b> {request['Request submission date']}</div>", unsafe_allow_html=True)
+                with st.container():
+                    st.markdown("<div class='request-card'>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='request-header'>Project: {request['Project name']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='request-detail'><b>TRX ID:</b> {request['TRX ID']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='request-detail'><b>Budget Line:</b> {request['Budget line']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='request-detail'><b>Purpose:</b> {request['Purpose']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='amount'>Requested Amount: {int(request['Requested Amount']):,} IQD</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='request-detail'><b>Submission Date:</b> {request['Request submission date']}</div>", unsafe_allow_html=True)
 
-                col1, col2 = st.columns(2)
-                if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
-                    success = update_approval(sheet, request["TRX ID"], "Approved")
-                    if success:
-                        st.success(f"Request {request['TRX ID']} approved.")
-                        st.rerun()
+                    col1, col2 = st.columns(2)
+                    if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
+                        if st.confirm("Are you sure you want to approve this request?"):
+                            update_approval(sheet, request["TRX ID"], "Approved")
+                            st.success(f"Request {request['TRX ID']} approved.")
+                            st.rerun()
 
-                if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
-                    success = update_approval(sheet, request["TRX ID"], "Declined")
-                    if success:
-                        st.warning(f"Request {request['TRX ID']} declined.")
-                        st.rerun()
+                    if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
+                        if st.confirm("Are you sure you want to decline this request?"):
+                            update_approval(sheet, request["TRX ID"], "Declined")
+                            st.warning(f"Request {request['TRX ID']} declined.")
+                            st.rerun()
 
-                st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-        # Past Requests Tab (existing design retained)
+        # Past Requests Tab
         with tab2:
-            past_requests = fetch_pending_requests()
+            past_requests = fetch_past_requests()
             if past_requests.empty:
                 st.info("No past requests available.")
                 return
-
-            st.write("### Approved and Declined Requests")
             st.dataframe(past_requests)
 
     except Exception as e:
