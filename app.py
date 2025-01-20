@@ -73,11 +73,11 @@ else:
     with st.sidebar:
         st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='sidebar-text'>Welcome, {st.session_state['user_email']}</div>", unsafe_allow_html=True)
-        if st.button("Log Out", key="logout_btn", help="Click to log out", args=("logout",), use_container_width=True):
+        if st.button("Log Out", key="logout_btn", help="Click to log out", use_container_width=True):
             logout()
 
         st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
-        
+
         # Sidebar navigation
         page = st.radio(
             "Navigation",
@@ -99,8 +99,15 @@ else:
 
     elif page == "Approver":
         if st.session_state["user_role"] in ["Admin", "Approver"]:
-            from approver_page import render_approver_page
-            render_approver_page()
+            tab1, tab2 = st.tabs(["Pending Requests", "Past Requests"])
+
+            with tab1:
+                from approver_page import render_approver_page
+                render_approver_page()
+
+            with tab2:
+                from past_requests import render_past_requests
+                render_past_requests()
         else:
             st.warning("You do not have permission to access this page.")
 
