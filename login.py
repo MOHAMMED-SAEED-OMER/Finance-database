@@ -38,28 +38,14 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Custom CSS for styling
+# Custom CSS for styling (No background color applied)
 st.markdown(
     """
     <style>
-        body {
-            background-color: #1E3A8A;
-            color: #ffffff;
-            font-family: 'Arial', sans-serif;
-        }
-        .stApp {
-            background-color: #1E3A8A;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
         .header {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #ffffff;
+            color: #1E3A8A;
             text-align: center;
             margin-bottom: 20px;
         }
@@ -98,7 +84,7 @@ st.markdown(
         }
         .footer {
             font-size: 0.9rem;
-            color: #E5E7EB;
+            color: #374151;
             text-align: center;
             margin-top: 20px;
         }
