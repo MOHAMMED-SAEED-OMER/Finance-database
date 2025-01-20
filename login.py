@@ -43,34 +43,53 @@ def render_login():
     st.markdown(
         """
         <style>
+            body {
+                background-color: #1E3A8A;
+                color: #ffffff;
+                font-family: 'Arial', sans-serif;
+            }
             .stApp {
-                background-color: #f0f2f6;
+                background-color: #1E3A8A;
             }
             .login-container {
-                max-width: 500px;
-                margin: auto;
+                max-width: 450px;
+                margin: 5% auto;
                 padding: 2rem;
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
                 text-align: center;
             }
             .login-title {
-                font-size: 2rem;
+                font-size: 2.5rem;
                 font-weight: bold;
-                color: #007BFF;
-            }
-            .login-info {
-                font-size: 1rem;
-                color: #555;
-                margin-bottom: 1rem;
-            }
-            .input-field {
-                text-align: left;
-                margin-bottom: 10px;
+                color: #1E3A8A;
+                margin-bottom: 20px;
             }
             .stTextInput>div>div>input {
                 text-align: center;
+            }
+            .btn-login {
+                background-color: #1E3A8A;
+                color: #ffffff;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 1.1rem;
+                width: 100%;
+                border: none;
+            }
+            .btn-login:hover {
+                background-color: #3B82F6;
+            }
+            .checkbox-label {
+                color: #000000;
+                font-size: 1rem;
+            }
+            .footer {
+                font-size: 0.9rem;
+                color: #E5E7EB;
+                text-align: center;
+                margin-top: 20px;
             }
         </style>
         """,
@@ -78,18 +97,7 @@ def render_login():
     )
 
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Welcome to Hasar Organization</div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class='login-info'>
-            Hasar Organization for Climate Action is dedicated to creating sustainable environmental solutions.
-            This app helps you manage financial operations efficiently, ensuring smooth financial oversight.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.image("https://www.hasar.org/logo.png", use_container_width=True)
+    st.markdown("<div class='login-title'>Hasar Organization</div>", unsafe_allow_html=True)
 
     st.markdown("## 🔐 Login")
 
@@ -102,8 +110,8 @@ def render_login():
     with st.form("login_form"):
         email = st.text_input("Email:", value=st.session_state.saved_email, placeholder="Enter your email")
         password = st.text_input("Password:", value=st.session_state.saved_password, placeholder="Enter your password", type="password")
-        remember_me = st.checkbox("Keep me signed in")
-        submit_button = st.form_submit_button("Login")
+        remember_me = st.checkbox("Keep me signed in", key="remember_me")
+        submit_button = st.form_submit_button("Login", use_container_width=True)
 
     if submit_button:
         if not email or not password:
@@ -145,10 +153,11 @@ def render_login():
 
             st.success("Login successful! Redirecting...")
 
-            # Correct way to update query parameters
+            # Redirect to database page after login
             st.query_params.update({"page": "database"})
 
         except Exception as e:
             st.error(f"Error during login: {e}")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='footer'>© 2025 Hasar Organization for Climate Action</div>", unsafe_allow_html=True)
