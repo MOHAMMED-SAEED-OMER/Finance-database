@@ -11,6 +11,7 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
     st.session_state["user_role"] = None
+    st.session_state["selected_request_option"] = "Submit a Request"  # Default request option
 
 # Logout function
 def logout():
@@ -23,30 +24,33 @@ if not st.session_state["logged_in"]:
     from login import render_login
     render_login()
 else:
-    # Sidebar with user information and logout button
-    st.sidebar.markdown("<h2 style='color:#1E3A8A;'>Finance Management</h2>", unsafe_allow_html=True)
-    st.sidebar.markdown(f"**👋 Welcome, {st.session_state['user_email']}**")
-    
-    if st.sidebar.button("Log Out", key="logout_sidebar_button"):
-        logout()
+    with st.sidebar:
+        st.write(f"👋 Welcome, {st.session_state['user_email']}")
+        if st.button("Log Out"):
+            logout()
 
-    # Horizontal navigation tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "Submit a Request", 
-        "Approver", 
-        "Payment", 
-        "Liquidation", 
-        "Database", 
-        "Add Data", 
+    # Navigation tabs with dropdown for Requests
+    options = ["Submit a Request", "View My Requests"]
+    st.session_state["selected_request_option"] = st.sidebar.selectbox("📝 Requests", options)
+
+    # Other navigation tabs
+    tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "Approver",
+        "Payment",
+        "Liquidation",
+        "Database",
+        "Add Data",
         "User Profiles"
     ])
 
-    with tab1:
-        if st.session_state["user_role"] in ["Admin", "Requester"]:
-            from submit_request import render_request_form
-            render_request_form()
-        else:
-            st.warning("You do not have permission to access this page.")
+    # Request sub-pages logic
+    if st.session_state["selected_request_option"] == "Submit a Request":
+        from submit_request import render_request_form
+        render_request_form()
+
+    elif st.session_state["selected_request_option"] == "View My Requests":
+        from view_requests import render_user_requests
+        render_user_requests()
 
     with tab2:
         if st.session_state["user_role"] in ["Admin", "Approver"]:
