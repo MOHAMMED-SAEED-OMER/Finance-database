@@ -1,7 +1,10 @@
 import streamlit as st
 
-# Set page configuration (must be the first Streamlit command)
-st.set_page_config(page_title="Hasar Organization", layout="wide")
+# Set page configuration
+st.set_page_config(
+    page_title="Finance Database",
+    layout="wide",
+)
 
 # Initialize session state
 if "logged_in" not in st.session_state:
@@ -17,7 +20,15 @@ else:
     st.sidebar.title("Navigation")
     page = st.sidebar.radio(
         "Go to:",
-        options=["Database", "Add New Data", "Submit a Request", "Approver", "Payment", "User Profiles"]
+        options=[
+            "Database",
+            "Add New Data",
+            "Submit a Request",
+            "Approver",
+            "Payment",
+            "Liquidation",
+            "User Profiles"
+        ]
     )
 
     if page == "Database":
@@ -47,8 +58,15 @@ else:
 
     elif page == "Payment":
         if st.session_state["user_role"] in ["Admin", "Approver"]:
-            from payment_page import render_payment_page
+            from payment_page import render_payment_page  # Use the correct function name
             render_payment_page()
+        else:
+            st.warning("You do not have permission to access this page.")
+
+    elif page == "Liquidation":
+        if st.session_state["user_role"] == "Admin":
+            from liquidation_page import render_liquidation_page
+            render_liquidation_page()
         else:
             st.warning("You do not have permission to access this page.")
 
