@@ -44,25 +44,22 @@ def display_random_image():
     width = 400
     height = 500
     image_url = f"https://picsum.photos/{width}/{height}?random={time.time()}"  # Unique image every refresh
-    st.image(image_url, use_column_width=True)
+    st.image(image_url, use_container_width=True)
 
 # Render the Login Page
 def render_login():
+    st.set_page_config(page_title="Hasar Organization", layout="wide")
+
     # Split the screen into two columns
     col1, col2 = st.columns([1, 1])
 
     # Left column for dynamic images and social media links
     with col1:
-        st.markdown("## Welcome to Hasar Organization")
-        st.markdown("### Inspiring Change Through Climate Action")
+        st.markdown("<h2 style='text-align: center;'>Welcome to Hasar Organization</h2>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center; color: gray;'>Inspiring Change Through Climate Action</h4>", unsafe_allow_html=True)
         
-       # Function to display a random image from Lorem Picsum
-def display_random_image():
-    width = 400
-    height = 500
-    image_url = f"https://picsum.photos/{width}/{height}?random={time.time()}"  # Unique image every refresh
-    st.image(image_url, use_container_width=True)
-
+        # Display dynamic images
+        display_random_image()
 
         # Add social media links
         st.markdown("### Connect with Us")
@@ -126,10 +123,10 @@ def display_random_image():
                     st.session_state.saved_email = ""
                     st.session_state.saved_password = ""
 
-                st.success("Login successful!")
+                st.success("Login successful! Redirecting...")
 
                 # Redirect to the database page after successful login
-                st.query_params["page"] = "database"
+                st.session_state["page"] = "Database"
 
             except Exception as e:
                 st.error(f"Error during login: {e}")
