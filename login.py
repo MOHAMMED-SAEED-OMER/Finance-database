@@ -56,8 +56,13 @@ def render_login():
         st.markdown("## Welcome to Hasar Organization")
         st.markdown("### Inspiring Change Through Climate Action")
         
-        # Display dynamic images
-        display_random_image()
+       # Function to display a random image from Lorem Picsum
+def display_random_image():
+    width = 400
+    height = 500
+    image_url = f"https://picsum.photos/{width}/{height}?random={time.time()}"  # Unique image every refresh
+    st.image(image_url, use_container_width=True)
+
 
         # Add social media links
         st.markdown("### Connect with Us")
