@@ -38,7 +38,7 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Custom CSS for better styling and removing white space
+# Custom CSS for styling
 st.markdown(
     """
     <style>
@@ -56,6 +56,13 @@ st.markdown(
             align-items: center;
             height: 100vh;
         }
+        .header {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
         .login-container {
             max-width: 450px;
             margin: auto;
@@ -66,15 +73,16 @@ st.markdown(
             text-align: center;
         }
         .login-title {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: bold;
             color: #1E3A8A;
             margin-bottom: 10px;
         }
-        .login-subtitle {
-            font-size: 1.2rem;
+        .instructions {
+            font-size: 1rem;
             color: #374151;
             margin-bottom: 20px;
+            text-align: left;
         }
         .btn-login {
             background-color: #1E3A8A;
@@ -100,23 +108,35 @@ st.markdown(
 )
 
 def render_login():
+    st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Sign in to Hasar Portal</div>", unsafe_allow_html=True)
-    st.markdown("<div class='login-subtitle'>Empowering Climate Action</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-title'>Sign in to Your Account</div>", unsafe_allow_html=True)
+    
+    st.markdown(
+        """
+        <div class='instructions'>
+            <ul>
+                <li>Use your registered email and password to log in.</li>
+                <li>Click 'Keep me signed in' to stay logged in for your session.</li>
+                <li>Contact the admin if you encounter login issues.</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Use session state to persist credentials
-    if "saved_email" not in st.session_state:
-        st.session_state.saved_email = ""
-    if "saved_password" not in st.session_state:
-        st.session_state.saved_password = ""
+    # Check if the user is already logged in
+    if "logged_in" in st.session_state and st.session_state["logged_in"]:
+        st.success("You are already logged in.")
+        st.query_params.update({"page": "database"})
+        return
 
-    with st.form("login_form"):
-        email = st.text_input("Email:", value=st.session_state.saved_email, placeholder="Enter your email")
-        password = st.text_input("Password:", value=st.session_state.saved_password, placeholder="Enter your password", type="password")
-        remember_me = st.checkbox("Keep me signed in", key="remember_me")
-        submit_button = st.form_submit_button("Sign In", use_container_width=True)
+    # Login form
+    email = st.text_input("Email:", placeholder="Enter your email")
+    password = st.text_input("Password:", placeholder="Enter your password", type="password")
+    remember_me = st.checkbox("Keep me signed in")
 
-    if submit_button:
+    if st.button("Sign In", use_container_width=True):
         if not email or not password:
             st.warning("Please fill out all fields.")
             return
@@ -148,11 +168,9 @@ def render_login():
 
             # Save session state if "Remember Me" is checked
             if remember_me:
-                st.session_state.saved_email = email
-                st.session_state.saved_password = password
+                st.session_state["keep_signed_in"] = True
             else:
-                st.session_state.saved_email = ""
-                st.session_state.saved_password = ""
+                st.session_state["keep_signed_in"] = False
 
             st.success("Login successful! Redirecting...")
 
