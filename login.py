@@ -1,8 +1,4 @@
 import streamlit as st
-
-# Set page configuration must be the first Streamlit command
-st.set_page_config(page_title="Hasar Organization", layout="wide")
-
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -128,7 +124,7 @@ def render_login():
                 st.success("Login successful!")
 
                 # Redirect to the database page after successful login
-                st.query_params(page="database")
+                st.query_params["page"] = "database"
 
             except Exception as e:
                 st.error(f"Error during login: {e}")
