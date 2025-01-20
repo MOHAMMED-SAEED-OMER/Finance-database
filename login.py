@@ -1,44 +1,3 @@
-import gspread
-import streamlit as st
-from google.oauth2.service_account import Credentials
-import pandas as pd
-import hashlib
-
-# Google Sheets setup
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
-
-# Load credentials from Streamlit secrets
-def load_credentials():
-    key_data = st.secrets["GOOGLE_CREDENTIALS"]
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
-    return gspread.authorize(credentials)
-
-# Fetch user data from Google Sheets
-def fetch_user_data():
-    try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
-        data = sheet.get_all_records()
-
-        # Convert to DataFrame
-        df = pd.DataFrame(data)
-
-        # Ensure expected columns exist
-        required_columns = {"Email", "Password", "Role"}
-        if not required_columns.issubset(df.columns):
-            raise ValueError(f"The Users sheet must include the following columns: {required_columns}")
-
-        return df
-    except Exception as e:
-        st.error(f"Error fetching user data: {e}")
-        return pd.DataFrame()
-
-# Hash the password
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-# Render the Login Page
 def render_login():
     st.markdown(
         """
@@ -137,8 +96,8 @@ def render_login():
 
             st.success("Login successful! Redirecting...")
 
-            # Redirect to the main app
-            st.query_params(page="database")
+            # Correct way to update query parameters
+            st.query_params.update({"page": "database"})
 
         except Exception as e:
             st.error(f"Error during login: {e}")
