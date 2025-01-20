@@ -67,14 +67,6 @@ def set_custom_css():
                 margin-bottom: 10px;
                 font-family: 'Arial', sans-serif;
             }
-            .instructions {
-                font-size: 1rem;
-                color: #374151;
-                margin-bottom: 20px;
-                text-align: left;
-                line-height: 1.5;
-                font-family: 'Arial', sans-serif;
-            }
             .btn-login {
                 background-color: #1E3A8A;
                 color: #ffffff;
@@ -105,19 +97,6 @@ def render_login():
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown("<div class='login-title'>Sign in to Your Account</div>", unsafe_allow_html=True)
-    
-    st.markdown(
-        """
-        <div class='instructions'>
-            <ul>
-                <li>🌿 Use your registered email and password to access the system.</li>
-                <li>🔒 Keep your credentials safe and private.</li>
-                <li>❓ Need help? Contact <a href="mailto:support@hasar.org">support@hasar.org</a>.</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     # Check if the user is already logged in
     if "logged_in" in st.session_state and st.session_state["logged_in"]:
