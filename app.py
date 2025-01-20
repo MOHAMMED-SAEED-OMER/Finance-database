@@ -12,30 +12,43 @@ if "logged_in" not in st.session_state:
     st.session_state["user_email"] = None
     st.session_state["user_role"] = None
 
+# Handle logout function
+def logout():
+    st.session_state["logged_in"] = False
+    st.session_state["user_email"] = None
+    st.session_state["user_role"] = None
+    st.rerun()
+
 if not st.session_state["logged_in"]:
     from login import render_login
     render_login()
 else:
-    # Sidebar with user info and logout button
-    st.sidebar.title("Welcome")
-    st.sidebar.write(f"👤 **User:** {st.session_state['user_email']}")
-    st.sidebar.write(f"🔑 **Role:** {st.session_state['user_role']}")
-
-    if st.sidebar.button("Logout"):
-        st.session_state["logged_in"] = False
-        st.session_state["user_email"] = None
-        st.session_state["user_role"] = None
-        st.experimental_rerun()
-
     # Sidebar Navigation
     st.sidebar.title("Navigation")
+
+    # Display welcome message and user info
+    st.sidebar.markdown(f"**Welcome,** {st.session_state['user_email']} 👋")
+    st.sidebar.markdown(f"**Role:** {st.session_state['user_role']}")
+
+    # Add logout button
+    if st.sidebar.button("Logout", key="logout_button"):
+        logout()
+
+    # Navigation options
     page = st.sidebar.radio(
         "Go to:",
-        options=["Submit a Request", "Approver", "Payment", "Liquidation", "Database", "Add Data", "User Profiles"]
+        options=[
+            "Submit a Request",
+            "Approver",
+            "Payment",
+            "Liquidation",
+            "Database",
+            "Add Data",
+            "User Profiles"
+        ]
     )
 
-    st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>Finance Management System</h1>", unsafe_allow_html=True)
-
+    # Load corresponding page based on selection
     if page == "Submit a Request":
         if st.session_state["user_role"] in ["Admin", "Requester"]:
             from submit_request import render_request_form
