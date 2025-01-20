@@ -22,7 +22,6 @@ def fetch_dropdown_options():
         helper_sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Helper")
         helper_data = helper_sheet.get_all_records()
 
-        # Extract project names and payment methods, ignoring blanks
         dropdown_options = {
             "Project Name": [row["Project name"] for row in helper_data if "Project name" in row and row["Project name"].strip()],
             "Payment Method": [row["Payment method"] for row in helper_data if "Payment method" in row and row["Payment method"].strip()],
@@ -48,56 +47,39 @@ def generate_trx_id(sheet):
 
 # Render the Request Submission Page
 def render_request_form():
-    st.markdown(
-        """
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📝 Requests</h2>", unsafe_allow_html=True)
+    st.write("Request funds here.")
+
+    # Custom CSS for styling the form
+    st.markdown("""
         <style>
-            .request-header {
-                font-size: 2.5rem;
-                font-weight: bold;
-                color: #1E3A8A;
-                text-align: center;
-                margin-bottom: 20px;
+            .stTextInput, .stTextArea, .stSelectbox {
+                border-radius: 10px;
+                border: 2px solid #1E3A8A;
+                padding: 10px;
             }
-            .request-container {
-                max-width: 800px;
-                margin: auto;
-                padding: 2rem;
-                background: #ffffff;
-                border-radius: 12px;
-                box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
-            }
-            .request-subtitle {
-                font-size: 1.2rem;
-                color: #374151;
-                text-align: center;
-                margin-bottom: 30px;
+            .stNumberInput {
+                border-radius: 10px;
+                border: 2px solid #1E3A8A;
+                padding: 10px;
             }
             .submit-btn {
                 background-color: #1E3A8A;
                 color: white;
-                border-radius: 5px;
-                padding: 12px;
-                font-size: 1.2rem;
-                width: 100%;
+                font-size: 18px;
+                padding: 10px 20px;
                 border: none;
-                cursor: pointer;
+                border-radius: 5px;
             }
             .submit-btn:hover {
                 background-color: #3B82F6;
             }
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<div class='request-header'>Requests</div>", unsafe_allow_html=True)
-    st.markdown("<div class='request-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='request-subtitle'>Request funds here</div>", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     # Fetch dropdown options
     dropdown_options = fetch_dropdown_options()
 
-    # Validate dropdown options
     if not dropdown_options["Project Name"]:
         st.warning("No projects found in the Helper tab. Please add project names.")
         return
@@ -105,60 +87,39 @@ def render_request_form():
         st.warning("No payment methods found in the Helper tab. Please add payment methods.")
         return
 
-    # Form fields with tooltips
-    project = st.selectbox(
-        "Choose a Project:",
-        options=[""] + dropdown_options["Project Name"],
-        help="Select the project you are requesting funds for."
-    )
-    payment_method = st.selectbox(
-        "Choose Payment Method:",
-        options=[""] + dropdown_options["Payment Method"],
-        help="Select the payment method you prefer (e.g., cash, bank transfer)."
-    )
-    budget_line = st.text_input(
-        "Budget Line:",
-        placeholder="Enter the budget line number",
-        help="Provide the budget line number related to this request."
-    )
-    purpose = st.text_area(
-        "Purpose of Request:",
-        placeholder="Describe the purpose of the request",
-        help="Provide a brief description of the reason for requesting funds."
-    )
-    request_details = st.text_area(
-        "Request Details:",
-        placeholder="Provide a cost breakdown (e.g., item1: $50, item2: $30)",
-        help="Include detailed breakdown of items and costs."
-    )
-    total_amount = st.number_input(
-        "Total Amount Requested (negative for expense):",
-        value=0.0,
-        step=0.01,
-        help="Enter the total requested amount as a negative number (e.g., -1000 for expenses)."
-    )
-    notes = st.text_area(
-        "Additional Notes or Remarks:",
-        placeholder="Enter any additional information (optional)",
-        help="Include any additional details or remarks about your request."
-    )
+    # Form layout
+    with st.form("request_form"):
+        project = st.selectbox("Choose a Project:", options=[""] + dropdown_options["Project Name"], help="Select the project you are requesting funds for.")
+        payment_method = st.selectbox("Choose Payment Method:", options=[""] + dropdown_options["Payment Method"], help="Select the method of payment.")
 
-    # Get the requester name from session state
-    requester_name = st.session_state.get("user_email", "Unknown")
+        budget_line = st.text_input("Write the Budget Line:", help="Enter the budget line item for this request.")
+        purpose = st.text_area("Explain the Purpose of Your Request:", help="Provide a brief purpose for the requested funds.")
+        request_details = st.text_area("Request Details (e.g., cost breakdown):", help="List all the items and costs for this request.")
 
-    # Submit button
-    if st.button("Submit Request", key="submit_request", use_container_width=True):
+        total_amount_str = st.text_input(
+            "Total Amount Requested (IQD):",
+            help="Enter the amount in IQD, e.g., 1,000,000. The system will automatically convert to a negative value.",
+            placeholder="e.g., 1,000,000"
+        )
+
+        notes = st.text_area("Additional Notes or Remarks:", help="Any additional comments or details.")
+
+        submit_button = st.form_submit_button("Submit Request", use_container_width=True)
+
+    if submit_button:
         if not project:
             st.warning("Please choose a project.")
             return
         if not payment_method:
             st.warning("Please choose a payment method.")
             return
-        if total_amount >= 0:
-            st.warning("The total amount requested must be negative.")
+        if not total_amount_str.replace(",", "").isdigit():
+            st.warning("Please enter a valid amount in numbers (e.g., 1,000,000).")
             return
 
         try:
+            total_amount = -int(total_amount_str.replace(",", ""))  # Convert to negative integer
+
             client = load_credentials()
             sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
@@ -171,10 +132,31 @@ def render_request_form():
 
             # Prepare the data to append
             new_row = [
-                trx_id, "Expense", "Project expense", "Request based", requester_name,
-                project, budget_line, purpose, request_details, total_amount,
-                submission_date, "Pending", "", "", "", payment_method,
-                "", "", "", "", "", "", "", "", notes
+                trx_id,  # TRX ID
+                "Expense",  # TRX Type
+                "Project expense",  # TRX Category
+                "Request based",  # Request/Direct
+                st.session_state.get("user_email", "Unknown"),  # Requester Name
+                project,  # Project Name
+                budget_line,  # Budget Line
+                purpose,  # Purpose
+                request_details,  # Detail
+                total_amount,  # Requested Amount (negative value)
+                submission_date,  # Request Submission Date
+                "Pending",  # Approval Status
+                "",  # Approval Date
+                "",  # Payment Status
+                "",  # Payment Date
+                payment_method,  # Payment Method
+                "",  # Liquidation Status
+                "",  # Liquidated Amount
+                "",  # Liquidation Date
+                "",  # Liquidated Invoices
+                "",  # Returned Amount
+                "",  # Related Request ID
+                "",  # Supplier/Donor
+                "",  # Contribution
+                notes,  # Remarks
             ]
 
             # Append the data to the Google Sheet
@@ -184,4 +166,5 @@ def render_request_form():
         except Exception as e:
             st.error(f"Error submitting request: {e}")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+if __name__ == "__main__":
+    render_request_form()
