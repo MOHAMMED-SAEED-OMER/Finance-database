@@ -23,54 +23,12 @@ if not st.session_state["logged_in"]:
     from login import render_login
     render_login()
 else:
-    # Custom styling for navigation bar with welcome message and logout button
-    st.markdown("""
-        <style>
-            .nav-container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background-color: #1E3A8A;
-                padding: 15px 30px;
-                border-radius: 10px;
-                color: white;
-                margin-bottom: 20px;
-            }
-            .nav-title {
-                font-size: 1.5rem;
-                font-weight: bold;
-            }
-            .nav-user {
-                font-size: 1.1rem;
-                margin-right: 20px;
-            }
-            .logout-btn {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 1rem;
-            }
-            .logout-btn:hover {
-                background-color: #d32f2f;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Navigation bar with logout button
-    col1, col2, col3 = st.columns([1, 4, 1])
-
-    with col1:
-        st.markdown("<div class='nav-title'>Finance Management System</div>", unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"<div class='nav-user'>👋 Welcome, {st.session_state['user_email']}</div>", unsafe_allow_html=True)
-
-    with col3:
-        if st.button("Log Out", key="logout_button", help="Click to log out", use_container_width=True):
-            logout()
+    # Sidebar with user information and logout button
+    st.sidebar.markdown("<h2 style='color:#1E3A8A;'>Finance Management</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown(f"**👋 Welcome, {st.session_state['user_email']}**")
+    
+    if st.sidebar.button("Log Out", key="logout_sidebar_button"):
+        logout()
 
     # Horizontal navigation tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
