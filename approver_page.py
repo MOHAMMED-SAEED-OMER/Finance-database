@@ -22,13 +22,27 @@ def fetch_pending_requests():
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
-
-        # Convert data to DataFrame and filter for pending requests
+        
         df = pd.DataFrame(data)
         pending_requests = df[df["Approval Status"].str.lower() == "pending"]
         return pending_requests
     except Exception as e:
         st.error(f"Error fetching pending requests: {e}")
+        return pd.DataFrame()  # Return empty DataFrame on error
+
+# Fetch all approved and declined requests
+@st.cache_data(ttl=60)
+def fetch_past_requests():
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        data = sheet.get_all_records()
+        
+        df = pd.DataFrame(data)
+        past_requests = df[df["Approval Status"].str.lower().isin(["approved", "declined"])]
+        return past_requests
+    except Exception as e:
+        st.error(f"Error fetching past requests: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
 
 # Update approval status, payment status, and dates
@@ -42,12 +56,10 @@ def update_approval(sheet, trx_id, status):
         headers = data[0]  # Get headers to identify column positions
         trx_id_col = headers.index("TRX ID") + 1  # Get TRX ID column position
 
-        # Find the row with the matching TRX ID
         for i, row in enumerate(data):
             if row[trx_id_col - 1] == trx_id:
                 row_index = i + 1  # Google Sheets row is 1-based index
 
-                # Update the approval status and date
                 approval_status_col = headers.index("Approval Status") + 1
                 approval_date_col = headers.index("Approval date") + 1
                 payment_status_col = headers.index("Payment status") + 1
@@ -65,56 +77,107 @@ def update_approval(sheet, trx_id, status):
         st.error(f"Error updating approval status: {e}")
         return False
 
-# Render Approver Page
+# Render the Approver Page
 def render_approver_page():
-    st.title("🔎 Approver Page")
-    st.write("Review pending requests and approve or decline them.")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Approver Panel</h2>", unsafe_allow_html=True)
+    st.write("Manage and review project funding requests.")
 
-    # Session state to track approved/declined requests
-    if "approved_request" not in st.session_state:
-        st.session_state["approved_request"] = None
+    # Tabs for Pending and Past Requests
+    tab1, tab2 = st.tabs(["Pending Requests", "Past Requests"])
+
+    # Custom CSS for design
+    st.markdown("""
+        <style>
+            .stSelectbox, .stButton {
+                border-radius: 10px;
+                border: 2px solid #1E3A8A;
+                padding: 10px;
+            }
+            .stDataFrame {
+                border: 2px solid #1E3A8A;
+                border-radius: 10px;
+            }
+            .approve-btn {
+                background-color: #1E3A8A;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+            }
+            .approve-btn:hover {
+                background-color: #3B82F6;
+            }
+            .decline-btn {
+                background-color: #D32F2F;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+            }
+            .decline-btn:hover {
+                background-color: #B71C1C;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Session state for tracking processed requests
+    if "processed_request" not in st.session_state:
+        st.session_state["processed_request"] = None
 
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
-        # Fetch pending requests
-        pending_requests = fetch_pending_requests()
+        # Pending Requests Tab
+        with tab1:
+            pending_requests = fetch_pending_requests()
 
-        if pending_requests.empty:
-            st.info("No pending requests to review.")
-            return
+            if pending_requests.empty:
+                st.info("No pending requests to review.")
+                return
 
-        # Display pending requests
-        st.write("### Pending Requests")
-        st.dataframe(pending_requests)
+            st.write("### Pending Requests")
+            st.dataframe(pending_requests)
 
-        # Select a request to approve or decline
-        trx_id = st.selectbox(
-            "Select a Request by TRX ID:",
-            options=pending_requests["TRX ID"].tolist(),
-        )
+            trx_id = st.selectbox(
+                "Select a Request by TRX ID:",
+                options=pending_requests["TRX ID"].tolist(),
+            )
 
-        # Action buttons
-        col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
 
-        if col1.button("Approve"):
-            success = update_approval(sheet, trx_id, "Approved")
-            if success:
-                st.session_state["approved_request"] = trx_id
-                st.success(f"Request {trx_id} has been approved.")
-                st.rerun()  # Refresh page
+            if col1.button("Approve", key="approve_btn"):
+                success = update_approval(sheet, trx_id, "Approved")
+                if success:
+                    st.session_state["processed_request"] = trx_id
+                    st.success(f"Request {trx_id} has been approved.")
+                    st.rerun()
 
-        if col2.button("Decline"):
-            success = update_approval(sheet, trx_id, "Declined")
-            if success:
-                st.session_state["approved_request"] = trx_id
-                st.warning(f"Request {trx_id} has been declined.")
-                st.rerun()  # Refresh page
+            if col2.button("Decline", key="decline_btn"):
+                success = update_approval(sheet, trx_id, "Declined")
+                if success:
+                    st.session_state["processed_request"] = trx_id
+                    st.warning(f"Request {trx_id} has been declined.")
+                    st.rerun()
 
-        # Display a message if a request was recently processed
-        if st.session_state["approved_request"]:
-            st.info(f"Recently processed request: {st.session_state['approved_request']}")
+            if st.session_state["processed_request"]:
+                st.info(f"Recently processed request: {st.session_state['processed_request']}")
+
+        # Past Requests Tab
+        with tab2:
+            past_requests = fetch_past_requests()
+
+            if past_requests.empty:
+                st.info("No past requests available.")
+                return
+
+            st.write("### Approved and Declined Requests")
+            st.dataframe(past_requests)
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
+
+if __name__ == "__main__":
+    render_approver_page()
