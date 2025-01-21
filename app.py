@@ -1,5 +1,5 @@
 import streamlit as st
-
+from view_requests import render_past_requests
 # Set page configuration
 st.set_page_config(
     page_title="Finance Database",
