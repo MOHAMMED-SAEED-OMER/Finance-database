@@ -62,7 +62,7 @@ def update_approval(sheet, trx_id, status):
 
 # Render Approver Page
 def render_approver_page():
-    st.title("Approver Panel")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Approver Panel</h2>", unsafe_allow_html=True)
     st.write("Review and approve or decline funding requests.")
 
     try:
@@ -82,17 +82,25 @@ def render_approver_page():
                 st.write(f"**Submission Date:** {request['Request submission date']}")
 
                 col1, col2 = st.columns(2)
+
+                approve_checkbox = col1.checkbox(f"Confirm approval for {request['TRX ID']}", key=f"approve_chk_{request['TRX ID']}")
+                decline_checkbox = col2.checkbox(f"Confirm decline for {request['TRX ID']}", key=f"decline_chk_{request['TRX ID']}")
+
                 if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
-                    if st.confirm("Are you sure you want to approve this request?"):
+                    if approve_checkbox:
                         update_approval(sheet, request["TRX ID"], "Approved")
                         st.success(f"Request {request['TRX ID']} approved.")
                         st.rerun()
+                    else:
+                        st.warning("Please confirm approval before proceeding.")
 
                 if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
-                    if st.confirm("Are you sure you want to decline this request?"):
+                    if decline_checkbox:
                         update_approval(sheet, request["TRX ID"], "Declined")
                         st.warning(f"Request {request['TRX ID']} declined.")
                         st.rerun()
+                    else:
+                        st.warning("Please confirm decline before proceeding.")
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
