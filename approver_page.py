@@ -31,11 +31,10 @@ def fetch_pending_requests():
         return pd.DataFrame()
 
 # Update approval status
-def update_approval(sheet, trx_id, status):
+def update_approval(trx_id, status):
     try:
-        baghdad_tz = pytz.timezone("Asia/Baghdad")
-        current_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
-
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_values()
         headers = data[0]
         trx_id_col = headers.index("TRX ID") + 1
@@ -48,13 +47,12 @@ def update_approval(sheet, trx_id, status):
                 payment_status_col = headers.index("Payment status") + 1
 
                 sheet.update_cell(row_index, approval_status_col, status)
-                sheet.update_cell(row_index, approval_date_col, current_date)
+                sheet.update_cell(row_index, approval_date_col, datetime.now(pytz.timezone("Asia/Baghdad")).strftime("%Y-%m-%d %H:%M:%S"))
 
                 if status == "Approved":
                     sheet.update_cell(row_index, payment_status_col, "Pending")
 
                 return True
-        st.error("TRX ID not found in the database.")
         return False
     except Exception as e:
         st.error(f"Error updating approval status: {e}")
@@ -66,8 +64,6 @@ def render_approver_page():
     st.write("Review and approve or decline funding requests.")
 
     try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         pending_requests = fetch_pending_requests()
 
         if pending_requests.empty:
@@ -83,22 +79,18 @@ def render_approver_page():
 
                 col1, col2 = st.columns(2)
 
-                # Approve Button
-                if col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}"):
-                    st.session_state["pending_action"] = (request['TRX ID'], "Approved")
+                approve_button = col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}")
+                decline_button = col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}")
 
-                # Decline Button
-                if col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}"):
-                    st.session_state["pending_action"] = (request['TRX ID'], "Declined")
+                if approve_button:
+                    if update_approval(request["TRX ID"], "Approved"):
+                        st.success(f"Request {request['TRX ID']} approved.")
+                        st.experimental_rerun()
 
-        # Process pending actions
-        if "pending_action" in st.session_state:
-            trx_id, action = st.session_state["pending_action"]
-            if st.button(f"Confirm {action} for {trx_id}", key=f"confirm_{trx_id}"):
-                update_approval(sheet, trx_id, action)
-                st.success(f"Request {trx_id} has been {action.lower()} successfully.")
-                del st.session_state["pending_action"]
-                st.experimental_rerun()  # Refresh page to remove processed request
+                if decline_button:
+                    if update_approval(request["TRX ID"], "Declined"):
+                        st.warning(f"Request {request['TRX ID']} declined.")
+                        st.experimental_rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
