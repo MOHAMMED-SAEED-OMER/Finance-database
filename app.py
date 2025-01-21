@@ -65,6 +65,13 @@ else:
             .sidebar-logout:hover {
                 background-color: #B71C1C;
             }
+            .page-title {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                text-align: center;
+                margin-bottom: 20px;
+            }
         </style>
         """,
         unsafe_allow_html=True
@@ -73,7 +80,7 @@ else:
     with st.sidebar:
         st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='sidebar-text'>Welcome, {st.session_state['user_email']}</div>", unsafe_allow_html=True)
-        if st.button("Log Out", key="logout_btn", help="Click to log out", use_container_width=True):
+        if st.button("Log Out", key="logout_btn", help="Click to log out", args=("logout",), use_container_width=True):
             logout()
 
         st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
@@ -85,8 +92,10 @@ else:
             index=0,
         )
 
-    # Render content based on selected page
+    # Display title above tabs
     if page == "Requests":
+        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
+        
         tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
 
         with tab1:
@@ -99,15 +108,8 @@ else:
 
     elif page == "Approver":
         if st.session_state["user_role"] in ["Admin", "Approver"]:
-            tab1, tab2 = st.tabs(["Pending Requests", "Past Requests"])
-
-            with tab1:
-                from approver_page import render_approver_page
-                render_approver_page()
-
-            with tab2:
-                from past_requests import render_past_requests
-                render_past_requests()
+            from approver_page import render_approver_page
+            render_approver_page()
         else:
             st.warning("You do not have permission to access this page.")
 
