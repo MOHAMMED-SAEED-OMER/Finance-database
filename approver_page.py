@@ -83,24 +83,19 @@ def render_approver_page():
 
                 col1, col2 = st.columns(2)
 
-                approve_checkbox = col1.checkbox(f"Confirm approval for {request['TRX ID']}", key=f"approve_chk_{request['TRX ID']}")
-                decline_checkbox = col2.checkbox(f"Confirm decline for {request['TRX ID']}", key=f"decline_chk_{request['TRX ID']}")
-
-                if col1.button("Approve", key=f"approve_{request['TRX ID']}"):
-                    if approve_checkbox:
+                if col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}"):
+                    confirm = st.confirm(f"Are you sure you want to approve Request {request['TRX ID']}?")
+                    if confirm:
                         update_approval(sheet, request["TRX ID"], "Approved")
                         st.success(f"Request {request['TRX ID']} approved.")
-                        st.rerun()
-                    else:
-                        st.warning("Please confirm approval before proceeding.")
+                        st.experimental_rerun()
 
-                if col2.button("Decline", key=f"decline_{request['TRX ID']}"):
-                    if decline_checkbox:
+                if col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}"):
+                    confirm = st.confirm(f"Are you sure you want to decline Request {request['TRX ID']}?")
+                    if confirm:
                         update_approval(sheet, request["TRX ID"], "Declined")
                         st.warning(f"Request {request['TRX ID']} declined.")
-                        st.rerun()
-                    else:
-                        st.warning("Please confirm decline before proceeding.")
+                        st.experimental_rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
