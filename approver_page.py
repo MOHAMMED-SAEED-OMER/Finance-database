@@ -85,12 +85,12 @@ def render_approver_page():
                 if approve_button:
                     if update_approval(request["TRX ID"], "Approved"):
                         st.success(f"Request {request['TRX ID']} approved.")
-                        st.experimental_rerun()
+                        st.rerun()
 
                 if decline_button:
                     if update_approval(request["TRX ID"], "Declined"):
                         st.warning(f"Request {request['TRX ID']} declined.")
-                        st.experimental_rerun()
+                        st.rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
