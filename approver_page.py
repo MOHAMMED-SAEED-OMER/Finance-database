@@ -15,8 +15,7 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch pending requests
-@st.cache_data(ttl=60)
+# Fetch pending requests with dynamic refresh
 def fetch_pending_requests():
     try:
         client = load_credentials()
@@ -79,18 +78,19 @@ def render_approver_page():
 
                 col1, col2 = st.columns(2)
 
-                approve_button = col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}")
-                decline_button = col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}")
+                if col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}"):
+                    update_approval(request["TRX ID"], "Approved")
+                    st.success(f"Request {request['TRX ID']} approved.")
+                    st.session_state["refresh_page"] = True
 
-                if approve_button:
-                    if update_approval(request["TRX ID"], "Approved"):
-                        st.success(f"Request {request['TRX ID']} approved.")
-                        st.rerun()
+                if col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}"):
+                    update_approval(request["TRX ID"], "Declined")
+                    st.warning(f"Request {request['TRX ID']} declined.")
+                    st.session_state["refresh_page"] = True
 
-                if decline_button:
-                    if update_approval(request["TRX ID"], "Declined"):
-                        st.warning(f"Request {request['TRX ID']} declined.")
-                        st.rerun()
+                if st.session_state.get("refresh_page", False):
+                    st.session_state["refresh_page"] = False
+                    st.rerun()
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
