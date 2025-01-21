@@ -64,8 +64,12 @@ def render_user_requests():
             }
         </style>
     """, unsafe_allow_html=True)
+# Render the View Requests Page
+def render_user_requests():
+    # Remove the duplicate title that is already at the top
+    # st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📂 My Requests</h2>", unsafe_allow_html=True)
 
-    st.markdown("<div class='title'>📂 My Requests</div>", unsafe_allow_html=True)
+    # Keep the instruction text
     st.markdown("<div class='sub-text'>Track your submitted requests and check their status.</div>", unsafe_allow_html=True)
 
     # Fetching user's data
