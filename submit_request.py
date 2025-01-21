@@ -47,12 +47,11 @@ def generate_trx_id(sheet):
 
 # Render the Request Submission Page
 def render_request_form():
-  # Remove this line as the main title is already at the top
-# st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📝 Requests</h2>", unsafe_allow_html=True)
+    # Remove this line as the main title is already at the top
+    # st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📝 Requests</h2>", unsafe_allow_html=True)
 
-# Keep only the instruction text
-st.write("Request funds here.")
-
+    # Keep only the instruction text
+    st.write("Request funds here.")
 
     # Custom CSS for styling the form
     st.markdown("""
