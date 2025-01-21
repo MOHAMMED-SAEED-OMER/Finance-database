@@ -34,7 +34,7 @@ def fetch_user_requests(user_email):
         return pd.DataFrame()  # Return empty DataFrame on error
 
 # Render User Requests Page
-def render_past_requests():
+def render_user_requests():
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📊 My Requests Dashboard</h2>", unsafe_allow_html=True)
     
     user_email = st.session_state.get("user_email", "Unknown")
