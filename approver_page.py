@@ -83,20 +83,22 @@ def render_approver_page():
 
                 col1, col2 = st.columns(2)
 
+                # Approve Button
                 if col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}"):
-                    st.session_state[f"confirm_{request['TRX ID']}"] = "Approve"
+                    st.session_state["pending_action"] = (request['TRX ID'], "Approved")
 
+                # Decline Button
                 if col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}"):
-                    st.session_state[f"confirm_{request['TRX ID']}"] = "Decline"
+                    st.session_state["pending_action"] = (request['TRX ID'], "Declined")
 
-                # Confirm action
-                if st.session_state.get(f"confirm_{request['TRX ID']}"):
-                    action = st.session_state[f"confirm_{request['TRX ID']}"]
-                    if st.button(f"Confirm {action}", key=f"confirm_action_{request['TRX ID']}"):
-                        update_approval(sheet, request["TRX ID"], action)
-                        st.success(f"Request {request['TRX ID']} {action.lower()}d successfully.")
-                        del st.session_state[f"confirm_{request['TRX ID']}"]  # Remove confirmation
-                        st.experimental_rerun()
+        # Process pending actions
+        if "pending_action" in st.session_state:
+            trx_id, action = st.session_state["pending_action"]
+            if st.button(f"Confirm {action} for {trx_id}", key=f"confirm_{trx_id}"):
+                update_approval(sheet, trx_id, action)
+                st.success(f"Request {trx_id} has been {action.lower()} successfully.")
+                del st.session_state["pending_action"]
+                st.experimental_rerun()  # Refresh page to remove processed request
 
     except Exception as e:
         st.error(f"Error loading approver page: {e}")
