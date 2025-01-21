@@ -47,8 +47,9 @@ def generate_trx_id(sheet):
 
 # Render the Request Submission Page
 def render_request_form():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📝 Requests</h2>", unsafe_allow_html=True)
-    st.write("Request funds here.")
+   # Removed duplicate header
+# st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📝 Requests</h2>", unsafe_allow_html=True)
+# st.write("Request funds here.")
 
     # Custom CSS for styling the form
     st.markdown("""
