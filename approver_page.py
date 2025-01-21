@@ -84,17 +84,18 @@ def render_approver_page():
                 col1, col2 = st.columns(2)
 
                 if col1.button(f"Approve {request['TRX ID']}", key=f"approve_{request['TRX ID']}"):
-                    confirm = st.confirm(f"Are you sure you want to approve Request {request['TRX ID']}?")
-                    if confirm:
-                        update_approval(sheet, request["TRX ID"], "Approved")
-                        st.success(f"Request {request['TRX ID']} approved.")
-                        st.experimental_rerun()
+                    st.session_state[f"confirm_{request['TRX ID']}"] = "Approve"
 
                 if col2.button(f"Decline {request['TRX ID']}", key=f"decline_{request['TRX ID']}"):
-                    confirm = st.confirm(f"Are you sure you want to decline Request {request['TRX ID']}?")
-                    if confirm:
-                        update_approval(sheet, request["TRX ID"], "Declined")
-                        st.warning(f"Request {request['TRX ID']} declined.")
+                    st.session_state[f"confirm_{request['TRX ID']}"] = "Decline"
+
+                # Confirm action
+                if st.session_state.get(f"confirm_{request['TRX ID']}"):
+                    action = st.session_state[f"confirm_{request['TRX ID']}"]
+                    if st.button(f"Confirm {action}", key=f"confirm_action_{request['TRX ID']}"):
+                        update_approval(sheet, request["TRX ID"], action)
+                        st.success(f"Request {request['TRX ID']} {action.lower()}d successfully.")
+                        del st.session_state[f"confirm_{request['TRX ID']}"]  # Remove confirmation
                         st.experimental_rerun()
 
     except Exception as e:
