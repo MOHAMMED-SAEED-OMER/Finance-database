@@ -36,7 +36,6 @@ def fetch_data():
 
 # Render database analysis page
 def render_database_analysis():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Funds Flow Analysis</h2>", unsafe_allow_html=True)
     st.write("Analyze the monthly income and expenses trends using a waterfall chart.")
 
     df = fetch_data()
