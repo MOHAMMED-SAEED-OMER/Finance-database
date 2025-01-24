@@ -54,9 +54,6 @@ def fetch_pending_payments():
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()
 
-
-
-
 # Update payment status and date
 def issue_payment(trx_id):
     try:
