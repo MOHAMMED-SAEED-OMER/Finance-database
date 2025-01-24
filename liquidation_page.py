@@ -65,7 +65,6 @@ def process_liquidation(sheet, trx_id, liquidated_amount, invoices_link):
 
 # Render Liquidation Page
 def render_liquidation_page():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Liquidation Processing</h2>", unsafe_allow_html=True)
     st.write("Review and process pending liquidations.")
 
     # Session state to track processed liquidations
