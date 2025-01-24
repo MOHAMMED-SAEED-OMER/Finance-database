@@ -33,7 +33,6 @@ def fetch_financial_data():
 
 # Render the Finance Dashboard
 def render_finance_dashboard():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Finance Dashboard</h2>", unsafe_allow_html=True)
     st.write("Gain insights into your financial data through interactive charts and statistics.")
 
     df = fetch_financial_data()
