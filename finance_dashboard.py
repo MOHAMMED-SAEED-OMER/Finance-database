@@ -137,7 +137,7 @@ def render_finance_dashboard():
     with col2:
         st.markdown("<div class='finance-header'>Total Expense</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='finance-box'>({abs(total_expense):,.0f}) IQD</div>", unsafe_allow_html=True)
-        st.plotly_chart(expense_chart, use_container_width=True)
+        st.plotly_chart(issued_chart, use_container_width=True)
 
     col3, col4 = st.columns(2)
 
