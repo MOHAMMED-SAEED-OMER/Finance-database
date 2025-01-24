@@ -23,11 +23,25 @@ def fetch_pending_payments():
         data = sheet.get_all_records()
 
         df = pd.DataFrame(data)
-        pending_payments = df[df["Payment Status"].str.lower() == "pending"]
+
+        # Check for correct column name
+        correct_column_name = None
+        for col in df.columns:
+            if col.strip().lower() == "payment status":
+                correct_column_name = col
+                break
+
+        if not correct_column_name:
+            st.error("Payment Status column not found in the sheet.")
+            return pd.DataFrame()
+
+        # Filter for pending payments
+        pending_payments = df[df[correct_column_name].str.lower() == "pending"]
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
-        return pd.DataFrame()  # Return empty DataFrame on error
+        return pd.DataFrame()
+
 
 # Update payment status and date
 def issue_payment(trx_id):
