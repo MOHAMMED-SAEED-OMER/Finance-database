@@ -45,64 +45,97 @@ def render_finance_dashboard():
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
     available_funds = (total_income - abs(total_expense)) - issued_funds
 
-    # Custom CSS for enhanced UI
+    # Custom CSS for cards UI
     st.markdown("""
         <style>
-            .finance-box {
+            .card-container {
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+            .card {
                 background-color: #F3F4F6;
                 border-radius: 10px;
                 padding: 30px;
-                margin-bottom: 10px;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-                font-size: 26px;
-                font-weight: bold;
                 text-align: center;
-                color: #1E3A8A;
                 transition: 0.3s ease-in-out;
+                width: 23%;
             }
-            .finance-box:hover {
-                transform: scale(1.05);
+            .card:hover {
+                transform: scale(1.03);
             }
-            .finance-header {
+            .card-title {
                 font-size: 22px;
                 font-weight: bold;
                 color: #1E3A8A;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+            }
+            .card-value {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1E3A8A;
+            }
+            .card-value-negative {
+                font-size: 28px;
+                font-weight: bold;
+                color: #D32F2F;
+            }
+            .expander-content {
+                text-align: left;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # Create four columns layout
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
+    # Displaying cards in a row
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
 
-    with col1:
-        if st.button(f"Total Income: {total_income:,.0f} IQD", key="income"):
-            with st.expander("Income Breakdown"):
-                income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-                income_breakdown["Liquidated amount"] = income_breakdown["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
-                st.dataframe(income_breakdown)
+    # Income Card
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    if st.button(f"Total Income"):
+        with st.expander("Income Breakdown"):
+            income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+            income_breakdown["Liquidated amount"] = income_breakdown["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
+            st.dataframe(income_breakdown)
+    st.markdown(f'<div class="card-title">Total Income</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="card-value">{total_income:,.0f} IQD</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with col2:
-        if st.button(f"Total Expenses: ({abs(total_expense):,.0f}) IQD", key="expense"):
-            with st.expander("Expense Breakdown"):
-                expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-                expense_breakdown["Liquidated amount"] = expense_breakdown["Liquidated amount"].apply(lambda x: f"({abs(x):,.0f}) IQD")
-                st.dataframe(expense_breakdown)
+    # Expense Card
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    if st.button(f"Total Expenses"):
+        with st.expander("Expense Breakdown"):
+            expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+            expense_breakdown["Liquidated amount"] = expense_breakdown["Liquidated amount"].apply(lambda x: f"({abs(x):,.0f}) IQD")
+            st.dataframe(expense_breakdown)
+    st.markdown(f'<div class="card-title">Total Expenses</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="card-value-negative">({abs(total_expense):,.0f}) IQD</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with col3:
-        if st.button(f"Issued Funds (Pending): ({issued_funds:,.0f}) IQD", key="issued"):
-            with st.expander("Issued Funds Details"):
-                issued_funds_details = df[df["Liquidation status"].str.lower() == "to be liquidated"][["TRX ID", "Requested Amount"]]
-                issued_funds_details["Requested Amount"] = issued_funds_details["Requested Amount"].apply(lambda x: f"({x:,.0f}) IQD")
-                st.dataframe(issued_funds_details)
+    # Issued Funds Card
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    if st.button(f"Issued Funds"):
+        with st.expander("Issued Funds Details"):
+            issued_funds_details = df[df["Liquidation status"].str.lower() == "to be liquidated"][["TRX ID", "Requested Amount"]]
+            issued_funds_details["Requested Amount"] = issued_funds_details["Requested Amount"].apply(lambda x: f"({x:,.0f}) IQD")
+            st.dataframe(issued_funds_details)
+    st.markdown(f'<div class="card-title">Issued Funds</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="card-value-negative">({issued_funds:,.0f}) IQD</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with col4:
-        if st.button(f"Available Funds Now: {available_funds:,.0f} IQD", key="available"):
-            with st.expander("Funds Distribution"):
-                funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
-                funds_distribution["Liquidated amount"] = funds_distribution["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
-                st.dataframe(funds_distribution)
+    # Available Funds Card
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    if st.button(f"Available Funds"):
+        with st.expander("Funds Distribution"):
+            funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
+            funds_distribution["Liquidated amount"] = funds_distribution["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
+            st.dataframe(funds_distribution)
+    st.markdown(f'<div class="card-title">Available Funds</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="card-value">{available_funds:,.0f} IQD</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     render_finance_dashboard()
