@@ -45,45 +45,55 @@ def render_finance_dashboard():
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
     available_funds = df["Liquidated amount"].sum() - issued_funds
 
-    # Prepare data for graphs
+    # Prepare data for graphs with reduced complexity
     df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
     df["Payment date"] = pd.to_datetime(df["Payment date"], errors='coerce')
 
-    # Convert periods to strings for JSON serialization compatibility
+    # Aggregate data by month to reduce clutter
     df["Liquidation Month"] = df["Liquidation date"].dt.to_period("M").astype(str)
-    df["Payment Day"] = df["Payment date"].dt.date.astype(str)
+    df["Payment Day"] = df["Payment date"].dt.strftime("%Y-%m-%d")
 
-    income_chart = px.line(
-        df[df["TRX type"].str.lower() == "income"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+    # Income trend (monthly aggregation, reduced data points)
+    income_data = df[df["TRX type"].str.lower() == "income"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index()
+    income_chart = px.bar(
+        income_data.tail(6),  # Show only the last 6 months
         x="Liquidation Month",
         y="Liquidated amount",
         title="Income Trend",
-        height=150
+        height=250,
+        color_discrete_sequence=["#1E3A8A"],
     )
 
-    expense_chart = px.line(
-        df[df["TRX type"].str.lower() == "expense"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+    # Expense trend (monthly aggregation, reduced data points)
+    expense_data = df[df["TRX type"].str.lower() == "expense"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index()
+    expense_chart = px.bar(
+        expense_data.tail(6),  # Show only the last 6 months
         x="Liquidation Month",
         y="Liquidated amount",
         title="Expense Trend",
-        height=150
+        height=250,
+        color_discrete_sequence=["#D32F2F"],
     )
 
-    issued_chart = px.line(
-        df[df["Liquidation status"].str.lower() == "to be liquidated"].groupby("Payment Day")["Requested Amount"].sum().reset_index(),
+    # Issued funds trend (recent transactions only)
+    issued_funds_data = df[df["Liquidation status"].str.lower() == "to be liquidated"].groupby("Payment Day")["Requested Amount"].sum().reset_index()
+    issued_chart = px.bar(
+        issued_funds_data.tail(7),  # Show only the last 7 days
         x="Payment Day",
         y="Requested Amount",
         title="Issued Funds Trend",
-        height=150
+        height=250,
+        color_discrete_sequence=["#F59E0B"],
     )
 
+    # Available funds breakdown by payment method
     funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
-    available_funds_chart = px.bar(
+    available_funds_chart = px.pie(
         funds_distribution,
-        x="Payment method",
-        y="Liquidated amount",
+        names="Payment method",
+        values="Liquidated amount",
         title="Available Funds Distribution",
-        height=150
+        hole=0.4,  # Make it a donut chart
     )
 
     # Custom CSS for enhanced UI
