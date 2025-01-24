@@ -45,35 +45,37 @@ def render_finance_dashboard():
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
     available_funds = df["Liquidated amount"].sum() - issued_funds
 
-    # Prepare data for graphs
-    df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
-    df["Payment date"] = pd.to_datetime(df["Payment date"], errors='coerce')
-    df["Liquidation Month"] = df["Liquidation date"].dt.to_period("M")
-    df["Payment Day"] = df["Payment date"].dt.date
+ # Prepare data for graphs
+df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
+df["Payment date"] = pd.to_datetime(df["Payment date"], errors='coerce')
 
-    income_chart = px.line(
-        df[df["TRX type"].str.lower() == "income"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
-        x="Liquidation Month",
-        y="Liquidated amount",
-        title="Income Trend",
-        height=150
-    )
+# Convert periods to strings for JSON serialization compatibility
+df["Liquidation Month"] = df["Liquidation date"].dt.to_period("M").astype(str)
+df["Payment Day"] = df["Payment date"].dt.date.astype(str)
 
-    expense_chart = px.line(
-        df[df["TRX type"].str.lower() == "expense"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
-        x="Liquidation Month",
-        y="Liquidated amount",
-        title="Expense Trend",
-        height=150
-    )
+income_chart = px.line(
+    df[df["TRX type"].str.lower() == "income"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+    x="Liquidation Month",
+    y="Liquidated amount",
+    title="Income Trend",
+    height=150
+)
 
-    issued_chart = px.line(
-        df[df["Liquidation status"].str.lower() == "to be liquidated"].groupby("Payment Day")["Requested Amount"].sum().reset_index(),
-        x="Payment Day",
-        y="Requested Amount",
-        title="Issued Funds Trend",
-        height=150
-    )
+expense_chart = px.line(
+    df[df["TRX type"].str.lower() == "expense"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+    x="Liquidation Month",
+    y="Liquidated amount",
+    title="Expense Trend",
+    height=150
+)
+
+issued_chart = px.line(
+    df[df["Liquidation status"].str.lower() == "to be liquidated"].groupby("Payment Day")["Requested Amount"].sum().reset_index(),
+    x="Payment Day",
+    y="Requested Amount",
+    title="Issued Funds Trend",
+    height=150
+)
 
     funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
     available_funds_chart = px.bar(
