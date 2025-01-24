@@ -59,8 +59,8 @@ def update_approval(trx_id, status):
 
 # Render Approver Page
 def render_approver_page():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Approver Panel</h2>", unsafe_allow_html=True)
     st.write("Review and approve or decline funding requests.")
+
 
     try:
         pending_requests = fetch_pending_requests()
