@@ -22,20 +22,17 @@ def fetch_data():
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
 
-        # Convert date column to datetime format and extract the month
+        # Convert liquidation date column to datetime and extract month-year
         df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
         df["Month"] = df["Liquidation date"].dt.strftime('%Y-%m')
 
         # Convert liquidated amount to numeric and handle errors
         df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors='coerce').fillna(0)
 
-        # Filter non-zero values
+        # Filter relevant rows (exclude rows with 0 liquidated amount)
         df = df[df["Liquidated amount"] != 0]
 
-        # Group by month and transaction type
-        monthly_summary = df.groupby(["Month", "TRX type"])["Liquidated amount"].sum().reset_index()
-
-        return monthly_summary
+        return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
@@ -51,34 +48,43 @@ def render_database_analysis():
         st.warning("No data available for analysis.")
         return
 
-    # Prepare data for waterfall chart (monthly net income = income - expense)
-    income_df = df[df["TRX type"] == "Income"].groupby("Month")["Liquidated amount"].sum().reset_index()
-    expense_df = df[df["TRX type"] == "Expense"].groupby("Month")["Liquidated amount"].sum().reset_index()
+    # Calculate monthly total income and expenses
+    income_df = df[df["TRX type"].str.lower() == "income"].groupby("Month")["Liquidated amount"].sum().reset_index()
+    expense_df = df[df["TRX type"].str.lower() == "expense"].groupby("Month")["Liquidated amount"].sum().reset_index()
 
-    # Merge income and expense to calculate monthly net change
+    # Merge income and expenses to calculate net changes
     summary_df = pd.merge(income_df, expense_df, on="Month", how="outer", suffixes=("_income", "_expense")).fillna(0)
     summary_df["Net Change"] = summary_df["Liquidated amount_income"] - summary_df["Liquidated amount_expense"]
 
-    # Create waterfall chart data
-    waterfall_chart_data = pd.DataFrame({
-        "Month": summary_df["Month"],
-        "Net Change": summary_df["Net Change"]
-    })
+    # Sort the months in chronological order
+    summary_df = summary_df.sort_values(by="Month")
 
-    # Plotly Waterfall Chart
+    # Prepare waterfall chart data
+    months = summary_df["Month"].tolist()
+    changes = summary_df["Net Change"].tolist()
+    base_amounts = [0]  # Start with zero balance
+
+    for i in range(len(changes)):
+        base_amounts.append(base_amounts[-1] + changes[i])
+
+    # Constructing the Waterfall Chart
     waterfall_fig = go.Figure(go.Waterfall(
         name="Funds Flow",
         orientation="v",
-        measure=["relative"] * len(waterfall_chart_data),
-        x=waterfall_chart_data["Month"],
-        y=waterfall_chart_data["Net Change"],
-        text=waterfall_chart_data["Net Change"].apply(lambda x: f"{x:,.0f} IQD"),
+        measure=["absolute"] + ["relative"] * len(changes),
+        x=months + ["Total"],
+        y=[0] + changes,
+        base=base_amounts[:-1] + [None],
+        text=[f"{val:,.0f} IQD" for val in ([0] + changes)],
         textposition="outside",
+        decreasing=dict(marker=dict(color="red")),
+        increasing=dict(marker=dict(color="green")),
+        totals=dict(marker=dict(color="blue")),
         connector=dict(line=dict(color="rgb(63, 63, 63)")),
     ))
 
     waterfall_fig.update_layout(
-        title="Monthly Funds Flow Waterfall Chart",
+        title="Monthly Funds Flow",
         xaxis_title="Month",
         yaxis_title="Net Income (IQD)",
         showlegend=False
