@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 from google.oauth2.service_account import Credentials
 import gspread
 
@@ -58,23 +58,26 @@ def render_database_analysis():
 
     waterfall_chart_data = pd.DataFrame({
         "Month": ["Starting Balance"] + waterfall_df["Month"].tolist(),
-        "Amount": [0] + waterfall_df["Net Change"].tolist(),
-        "Cumulative Total": [0] + waterfall_df["Cumulative Total"].tolist(),
-        "Category": ["Starting Balance"] + ["Net Change" for _ in waterfall_df["Month"]]
+        "Amount": [0] + waterfall_df["Net Change"].tolist()
     })
 
-    # Plotly Waterfall Chart
-    waterfall_fig = px.waterfall(
-        waterfall_chart_data,
-        x="Month",
-        y="Amount",
-        text="Cumulative Total",
-        title="Monthly Funds Flow Waterfall Chart",
-        labels={"Amount": "Amount (IQD)", "Month": "Month"},
-        connector_visible=True
-    )
+    # Plotly Waterfall Chart using graph_objects
+    waterfall_fig = go.Figure(go.Waterfall(
+        name="Funds Flow",
+        orientation="v",
+        measure=["absolute"] + ["relative"] * (len(waterfall_chart_data) - 1),
+        x=waterfall_chart_data["Month"],
+        y=waterfall_chart_data["Amount"],
+        textposition="outside",
+        connector=dict(line=dict(color="rgb(63, 63, 63)")),
+    ))
 
-    waterfall_fig.update_traces(textposition="outside")
+    waterfall_fig.update_layout(
+        title="Monthly Funds Flow Waterfall Chart",
+        xaxis_title="Month",
+        yaxis_title="Amount (IQD)",
+        showlegend=True
+    )
 
     st.plotly_chart(waterfall_fig, use_container_width=True)
 
