@@ -22,34 +22,35 @@ def fetch_pending_payments():
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
 
+        # Convert data to DataFrame
         df = pd.DataFrame(data)
 
-        # Standardize column names to avoid case and spacing issues
+        # Debugging: Display available columns in the dataframe
+        st.write("Available columns in the fetched data:", df.columns.tolist())
+
+        # Ensure column names are cleaned properly
         df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
-        # Define correct column keys in lowercase
-        expected_columns = {
-            "trx_id": "trx_id",
-            "payment_status": "payment_status",
-            "project_name": "project_name",
-            "requested_amount": "requested_amount",
-            "request_submission_date": "request_submission_date",
-        }
+        # Debugging: Display cleaned column names
+        st.write("Cleaned columns:", df.columns.tolist())
 
-        # Check if all expected columns exist
-        missing_columns = [col for col in expected_columns.values() if col not in df.columns]
+        # Expected column names in lowercase and underscored format
+        required_columns = [
+            "trx_id", "payment_status", "project_name", 
+            "requested_amount", "request_submission_date"
+        ]
+
+        # Check if all required columns exist
+        missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
-            st.error(f"Missing columns in the Google Sheet: {', '.join(missing_columns)}")
+            st.error(f"Missing columns in the data: {missing_columns}")
             return pd.DataFrame()
 
         # Filter for pending payments
-        pending_payments = df[df[expected_columns["payment_status"]].str.lower() == "pending"]
+        pending_payments = df[df["payment_status"].str.lower() == "pending"]
 
-        # Return only relevant columns with corrected case
-        return pending_payments[
-            [expected_columns["trx_id"], expected_columns["project_name"], 
-             expected_columns["requested_amount"], expected_columns["request_submission_date"]]
-        ]
+        return pending_payments[["trx_id", "project_name", "requested_amount", "request_submission_date"]]
+
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()
