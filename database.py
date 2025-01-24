@@ -46,23 +46,19 @@ def render_database():
 
     # Filter section inside the page
     st.markdown("### Filter Requests")
-    col1, col2, col3 = st.columns(3)
+    
+    col1, col2 = st.columns([1, 3])
     
     with col1:
-        requester_filter = st.text_input("Search by Requester Name:")
-    with col2:
-        project_filter = st.text_input("Search by Project Name:")
-    with col3:
-        status_filter = st.selectbox("Filter by Status:", ["All"] + df["Approval Status"].unique().tolist())
+        filter_column = st.selectbox("Select Column to Filter", ["None"] + list(df.columns))
 
-    # Apply filters
     filtered_df = df.copy()
-    if requester_filter:
-        filtered_df = filtered_df[filtered_df["Requester name"].str.contains(requester_filter, case=False, na=False)]
-    if project_filter:
-        filtered_df = filtered_df[filtered_df["Project name"].str.contains(project_filter, case=False, na=False)]
-    if status_filter != "All":
-        filtered_df = filtered_df[filtered_df["Approval Status"] == status_filter]
+    if filter_column != "None":
+        with col2:
+            filter_value = st.text_input(f"Enter value for {filter_column}:")
+        
+        if filter_value:
+            filtered_df = filtered_df[filtered_df[filter_column].astype(str).str.contains(filter_value, case=False, na=False)]
 
     # Calculate financial metrics
     total_income = filtered_df[filtered_df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
