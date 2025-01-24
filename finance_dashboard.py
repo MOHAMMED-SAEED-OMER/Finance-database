@@ -33,7 +33,7 @@ def fetch_finance_data():
 
 # Render Finance Dashboard
 def render_finance_dashboard():
-    st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💼 Finance Dashboard</h1>", unsafe_allow_html=True)
+ 
 
     df = fetch_finance_data()
     if df.empty:
