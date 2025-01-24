@@ -1,96 +1,82 @@
 import streamlit as st
-import gspread
 import pandas as pd
 import plotly.express as px
 from google.oauth2.service_account import Credentials
+import gspread
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
 
-# Load credentials from Streamlit secrets
 def load_credentials():
     key_data = st.secrets["GOOGLE_CREDENTIALS"]
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch and process database
+# Fetch data and process
 @st.cache_data(ttl=300)
-def fetch_database():
+def fetch_data():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
-
-        # Fetch data and convert to DataFrame
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
 
-        # Convert relevant columns to appropriate data types
-        df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors="coerce").fillna(0)
-        df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors="coerce")
+        # Convert date column to datetime format and extract the month
+        df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
+        df["Month"] = df["Liquidation date"].dt.strftime('%Y-%m')
 
-        return df
+        # Convert liquidated amount to numeric and handle errors
+        df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors='coerce').fillna(0)
+
+        # Filter non-zero values
+        df = df[df["Liquidated amount"] != 0]
+
+        # Group by month and transaction type
+        monthly_summary = df.groupby(["Month", "TRX type"])["Liquidated amount"].sum().unstack(fill_value=0).reset_index()
+
+        return monthly_summary
     except Exception as e:
-        st.error(f"Error loading the database: {e}")
+        st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
-# Render the Database Analysis Page
+# Render database analysis page
 def render_database_analysis():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Funds Analysis & Charts</h2>", unsafe_allow_html=True)
-    st.write("Analyze the flow of funds over time.")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Funds Flow Analysis</h2>", unsafe_allow_html=True)
+    st.write("Analyze the monthly income and expenses trends.")
 
-    df = fetch_database()
+    df = fetch_data()
 
     if df.empty:
         st.warning("No data available for analysis.")
         return
 
-    # Processing data for analysis
-    df["Month"] = df["Liquidation date"].dt.to_period("M")  # Convert to monthly periods
+    # Ensure the columns exist in the dataframe
+    if 'Income' not in df.columns:
+        df['Income'] = 0
+    if 'Expense' not in df.columns:
+        df['Expense'] = 0
 
-    # Grouping data by month and calculating net funds (income minus expense)
-    monthly_data = df.groupby(["Month", "TRX type"])["Liquidated amount"].sum().unstack(fill_value=0)
-    monthly_data["Net Funds"] = monthly_data.get("income", 0) + monthly_data.get("expense", 0)  # Expenses are negative
-
-    # Resetting index for plotting
-    monthly_data = monthly_data.reset_index()
-    monthly_data["Month"] = monthly_data["Month"].astype(str)  # Convert to string for plotting
-
-    # Plot financial trend
-    st.markdown("### 📈 Financial Trend Over Time")
-    fig = px.line(
-        monthly_data,
+    # Plotly visualization
+    line_fig = px.line(
+        df,
         x="Month",
-        y="Net Funds",
-        markers=True,
-        title="Monthly Net Funds Flow",
-        labels={"Net Funds": "Net Amount (IQD)", "Month": "Month"},
-        line_shape="linear",
-    )
-
-    fig.update_traces(line=dict(color="#1E3A8A", width=2), marker=dict(size=8))
-    fig.update_layout(xaxis_title="Month", yaxis_title="Net Funds (IQD)", template="plotly_white")
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Breakdown of income and expenses
-    st.markdown("### 📊 Monthly Income vs Expenses Breakdown")
-    bar_fig = px.bar(
-        monthly_data,
-        x="Month",
-        y=["income", "expense"],
-        title="Monthly Income & Expenses",
+        y=["Income", "Expense"],
         labels={"value": "Amount (IQD)", "Month": "Month"},
+        title="Monthly Income vs Expenses",
+        markers=True
+    )
+    st.plotly_chart(line_fig, use_container_width=True)
+
+    # Bar chart visualization
+    bar_fig = px.bar(
+        df,
+        x="Month",
+        y=["Income", "Expense"],
+        title="Income and Expenses Breakdown",
         barmode="group",
+        labels={"value": "Amount (IQD)", "Month": "Month"},
     )
-
-    bar_fig.update_layout(
-        xaxis_title="Month",
-        yaxis_title="Amount (IQD)",
-        legend_title="Transaction Type",
-        template="plotly_white",
-    )
-
     st.plotly_chart(bar_fig, use_container_width=True)
 
 if __name__ == "__main__":
