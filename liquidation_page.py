@@ -111,7 +111,10 @@ def render_liquidation_page():
                     elif not invoices_link.strip():
                         st.warning("Please provide an invoice link.")
                     else:
-                        success = process_liquidation(sheet, request["TRX ID"], int(liquidated_amount.replace(",", "")), invoices_link)
+                        # Ensure liquidated amount is stored as negative
+                        liquidated_amount = -abs(int(liquidated_amount.replace(",", "")))
+
+                        success = process_liquidation(sheet, request["TRX ID"], liquidated_amount, invoices_link)
                         if success:
                             st.session_state["processed_liquidation"] = request["TRX ID"]
                             st.success(f"Liquidation completed for TRX ID: {request['TRX ID']}")
@@ -123,6 +126,5 @@ def render_liquidation_page():
 
     except Exception as e:
         st.error(f"Error loading liquidation page: {e}")
-
 if __name__ == "__main__":
     render_liquidation_page()
