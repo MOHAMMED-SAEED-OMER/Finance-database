@@ -46,40 +46,41 @@ def render_finance_dashboard():
     available_funds = df["Liquidated amount"].sum() - issued_funds
 
     # Prepare data for graphs
-    monthly_summary = df.groupby("Request submission date").agg(
-        {"Liquidated amount": "sum", "Requested Amount": "sum"}
-    ).reset_index()
+    df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
+    df["Payment date"] = pd.to_datetime(df["Payment date"], errors='coerce')
+    df["Liquidation Month"] = df["Liquidation date"].dt.to_period("M")
+    df["Payment Day"] = df["Payment date"].dt.date
 
-    # Create mini graphs for visualization
     income_chart = px.line(
-        df[df["TRX type"].str.lower() == "income"],
-        x="Request submission date",
+        df[df["TRX type"].str.lower() == "income"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+        x="Liquidation Month",
         y="Liquidated amount",
         title="Income Trend",
         height=150
     )
 
     expense_chart = px.line(
-        df[df["TRX type"].str.lower() == "expense"],
-        x="Request submission date",
+        df[df["TRX type"].str.lower() == "expense"].groupby("Liquidation Month")["Liquidated amount"].sum().reset_index(),
+        x="Liquidation Month",
         y="Liquidated amount",
         title="Expense Trend",
         height=150
     )
 
     issued_chart = px.line(
-        df[df["Liquidation status"].str.lower() == "to be liquidated"],
-        x="Request submission date",
+        df[df["Liquidation status"].str.lower() == "to be liquidated"].groupby("Payment Day")["Requested Amount"].sum().reset_index(),
+        x="Payment Day",
         y="Requested Amount",
         title="Issued Funds Trend",
         height=150
     )
 
-    available_funds_chart = px.line(
-        monthly_summary,
-        x="Request submission date",
+    funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
+    available_funds_chart = px.bar(
+        funds_distribution,
+        x="Payment method",
         y="Liquidated amount",
-        title="Available Funds Trend",
+        title="Available Funds Distribution",
         height=150
     )
 
