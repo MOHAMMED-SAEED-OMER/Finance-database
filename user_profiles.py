@@ -20,7 +20,6 @@ def hash_password(password):
 
 # Render the User Profiles Page
 def render_user_profiles():
-    st.title("👤 User Profiles")
     st.write("Manage user accounts, roles, and passwords.")
 
     try:
