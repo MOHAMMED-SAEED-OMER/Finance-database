@@ -25,19 +25,19 @@ def fetch_pending_payments():
         df = pd.DataFrame(data)
 
         # Standardize column names to avoid case and spacing issues
-        df.columns = df.columns.str.strip().str.lower()
+        df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
         # Define correct column keys in lowercase
         expected_columns = {
-            "payment_status": "payment status",
-            "project_name": "project name",
-            "trx_id": "trx id",
-            "requested_amount": "requested amount",
-            "request_submission_date": "request submission date",
+            "trx_id": "trx_id",
+            "payment_status": "payment_status",
+            "project_name": "project_name",
+            "requested_amount": "requested_amount",
+            "request_submission_date": "request_submission_date",
         }
 
         # Check if all expected columns exist
-        missing_columns = [col for col in expected_columns.values() if col.lower() not in df.columns]
+        missing_columns = [col for col in expected_columns.values() if col not in df.columns]
         if missing_columns:
             st.error(f"Missing columns in the Google Sheet: {', '.join(missing_columns)}")
             return pd.DataFrame()
@@ -53,6 +53,7 @@ def fetch_pending_payments():
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()
+
 
 
 
