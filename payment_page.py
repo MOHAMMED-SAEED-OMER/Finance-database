@@ -16,81 +16,78 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch all pending payments
-@st.cache_data(ttl=60)
 def fetch_pending_payments():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
 
-        # Convert data to DataFrame and filter for pending payments
         df = pd.DataFrame(data)
-        pending_payments = df[df["Payment status"] == "Pending"]
+        pending_payments = df[df["Payment Status"].str.lower() == "pending"]
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()  # Return empty DataFrame on error
 
 # Update payment status and date
-def issue_payment(sheet, row_index):
+def issue_payment(trx_id):
     try:
-        baghdad_tz = pytz.timezone("Asia/Baghdad")
-        payment_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        data = sheet.get_all_values()
+        headers = data[0]
+        trx_id_col = headers.index("TRX ID") + 1
 
-        # Update Payment Status (Column 14)
-        sheet.update_cell(row_index, 14, "Issued")
-        # Update Payment Date (Column 15)
-        sheet.update_cell(row_index, 15, payment_date)
-        # Update Liquidation Status (Column 17 - FIXED)
-        sheet.update_cell(row_index, 17, "To be liquidated")
+        for i, row in enumerate(data):
+            if row[trx_id_col - 1] == trx_id:
+                row_index = i + 1
+                payment_status_col = headers.index("Payment Status") + 1
+                payment_date_col = headers.index("Payment Date") + 1
+                liquidation_status_col = headers.index("Liquidation Status") + 1
 
-        return True
+                baghdad_tz = pytz.timezone("Asia/Baghdad")
+                payment_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+                sheet.update_cell(row_index, payment_status_col, "Issued")
+                sheet.update_cell(row_index, payment_date_col, payment_date)
+                sheet.update_cell(row_index, liquidation_status_col, "To be liquidated")
+
+                return True
+        return False
     except Exception as e:
         st.error(f"Error issuing payment: {e}")
         return False
 
 # Render Payment Page
 def render_payment_page():
-    st.title("💵 Payment Processing")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Payment Processing</h2>", unsafe_allow_html=True)
     st.write("View and process pending payments.")
 
-    # Session state to track issued payments
-    if "issued_payment" not in st.session_state:
-        st.session_state["issued_payment"] = None
-
     try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
-
-        # Fetch pending payments
         pending_payments = fetch_pending_payments()
 
         if pending_payments.empty:
             st.info("No pending payments to process.")
             return
 
-        # Display pending payments
-        st.write("### Pending Payments")
-        st.dataframe(pending_payments)
+        for index, payment in pending_payments.iterrows():
+            with st.expander(f"Request ID: {payment['TRX ID']} - {payment['Project Name']}"):
+                st.write(f"**Budget Line:** {payment['Budget Line']}")
+                st.write(f"**Purpose:** {payment['Purpose']}")
+                st.write(f"**Amount to be Paid:** {int(payment['Requested Amount']):,} IQD")
+                st.write(f"**Approval Date:** {payment['Approval Date']}")
 
-        # Select a request to process payment
-        trx_id = st.selectbox(
-            "Select a Request by TRX ID:",
-            options=pending_payments["TRX ID"].tolist(),
-        )
+                if st.button(f"Issue Payment for {payment['TRX ID']}", key=f"issue_{payment['TRX ID']}"):
+                    issue_payment(payment["TRX ID"])
+                    st.success(f"Payment for {payment['TRX ID']} issued successfully.")
+                    st.session_state["refresh_page"] = True
 
-        # Action button
-        if st.button("Issue Payment"):
-            # Find the row index of the selected TRX ID
-            row_index = pending_payments[pending_payments["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
-            success = issue_payment(sheet, row_index)
-            if success:
-                st.session_state["issued_payment"] = trx_id
-                st.success(f"Payment issued for request {trx_id}.")
-
-        # Display a message if a payment was recently issued
-        if st.session_state["issued_payment"]:
-            st.info(f"Recently issued payment for TRX ID: {st.session_state['issued_payment']}")
+                if st.session_state.get("refresh_page", False):
+                    st.session_state["refresh_page"] = False
+                    st.rerun()
 
     except Exception as e:
         st.error(f"Error loading payment page: {e}")
+
+if __name__ == "__main__":
+    render_payment_page()
