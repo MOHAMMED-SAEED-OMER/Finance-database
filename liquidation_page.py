@@ -137,5 +137,6 @@ def render_liquidation_page():
 
     except Exception as e:
         st.error(f"Error loading liquidation page: {e}")
+
 if __name__ == "__main__":
     render_liquidation_page()
