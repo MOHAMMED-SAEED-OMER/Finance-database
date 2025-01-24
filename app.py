@@ -107,6 +107,7 @@ else:
             render_user_requests()
 
     elif page == "Approver":
+        st.markdown("<div class='page-title'>Approver</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] in ["Admin", "Approver"]:
             from approver_page import render_approver_page
             render_approver_page()
@@ -114,6 +115,7 @@ else:
             st.warning("You do not have permission to access this page.")
 
     elif page == "Payment":
+        st.markdown("<div class='page-title'>Payment</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] in ["Admin", "Approver"]:
             from payment_page import render_payment_page
             render_payment_page()
@@ -121,6 +123,7 @@ else:
             st.warning("You do not have permission to access this page.")
 
     elif page == "Liquidation":
+        st.markdown("<div class='page-title'>Liquidation</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] in ["Admin"]:
             from liquidation_page import render_liquidation_page
             render_liquidation_page()
@@ -128,10 +131,19 @@ else:
             st.warning("You do not have permission to access this page.")
 
     elif page == "Database":
-        from database import render_database
-        render_database()
+        st.markdown("<div class='page-title'>Database</div>", unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["View Database", "Analysis & Charts"])
+
+        with tab1:
+            from database import render_database
+            render_database()
+
+        with tab2:
+            from database_analyze import render_database_analysis
+            render_database_analysis()
 
     elif page == "Add Data":
+        st.markdown("<div class='page-title'>Add Data</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] in ["Admin", "Requester"]:
             from add_data import render_add_data
             render_add_data()
@@ -139,6 +151,7 @@ else:
             st.warning("You do not have permission to access this page.")
 
     elif page == "User Profiles":
+        st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] == "Admin":
             from user_profiles import render_user_profiles
             render_user_profiles()
