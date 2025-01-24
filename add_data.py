@@ -32,7 +32,6 @@ def fetch_dropdown_options_vertical():
 
 # Render the Add New Data Page
 def render_add_data():
-    st.title("➕ Add New Data")
     st.write("Use this page to add new data to the database dynamically.")
 
     try:
