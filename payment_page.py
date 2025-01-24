@@ -62,7 +62,7 @@ def issue_payment(sheet, trx_id):
 
 # Render Payment Page
 def render_payment_page():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>💵 Payment Processing</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Payment Processing</h2>", unsafe_allow_html=True)
     st.write("View and process pending payments.")
 
     try:
