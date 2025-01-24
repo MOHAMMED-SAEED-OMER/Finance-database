@@ -13,7 +13,7 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch data and process
+# Fetch and process database
 @st.cache_data(ttl=300)
 def fetch_data():
     try:
@@ -64,7 +64,7 @@ def render_database_analysis():
     })
 
     # Plotly Waterfall Chart
-    fig = px.waterfall(
+    waterfall_fig = px.waterfall(
         waterfall_chart_data,
         x="Month",
         y="Amount",
@@ -74,9 +74,9 @@ def render_database_analysis():
         connector_visible=True
     )
 
-    fig.update_traces(textposition="outside")
+    waterfall_fig.update_traces(textposition="outside")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(waterfall_fig, use_container_width=True)
 
 if __name__ == "__main__":
     render_database_analysis()
