@@ -59,23 +59,18 @@ def render_database_analysis():
     # Sort the months in chronological order
     summary_df = summary_df.sort_values(by="Month")
 
-    # Prepare waterfall chart data
+    # Waterfall chart values
     months = summary_df["Month"].tolist()
     changes = summary_df["Net Change"].tolist()
-    base_amounts = [0]  # Start with zero balance
 
-    for i in range(len(changes)):
-        base_amounts.append(base_amounts[-1] + changes[i])
-
-    # Constructing the Waterfall Chart
+    # Create waterfall chart with cumulative changes
     waterfall_fig = go.Figure(go.Waterfall(
         name="Funds Flow",
         orientation="v",
-        measure=["absolute"] + ["relative"] * len(changes),
+        measure=["relative"] * len(changes) + ["total"],
         x=months + ["Total"],
-        y=[0] + changes,
-        base=base_amounts[:-1] + [None],
-        text=[f"{val:,.0f} IQD" for val in ([0] + changes)],
+        y=changes + [sum(changes)],
+        text=[f"{val:,.0f} IQD" for val in changes] + [f"{sum(changes):,.0f} IQD"],
         textposition="outside",
         decreasing=dict(marker=dict(color="red")),
         increasing=dict(marker=dict(color="green")),
