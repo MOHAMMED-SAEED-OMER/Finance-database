@@ -80,7 +80,7 @@ else:
     with st.sidebar:
         st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='sidebar-text'>Welcome, {st.session_state['user_email']}</div>", unsafe_allow_html=True)
-        if st.button("Log Out", key="logout_btn", help="Click to log out", args=("logout",), use_container_width=True):
+        if st.button("Log Out", key="logout_btn", help="Click to log out", use_container_width=True):
             logout()
 
         st.markdown("<hr style='border: 1px solid white;'>", unsafe_allow_html=True)
@@ -88,7 +88,16 @@ else:
         # Sidebar navigation
         page = st.radio(
             "Navigation",
-            ["Requests", "Approver", "Payment", "Liquidation", "Database", "Add Data", "User Profiles"],
+            [
+                "Requests", 
+                "Approver", 
+                "Payment", 
+                "Liquidation", 
+                "Database", 
+                "Finance Dashboard", 
+                "Add Data", 
+                "User Profiles"
+            ],
             index=0,
         )
 
@@ -142,6 +151,11 @@ else:
             from database_analyze import render_database_analysis
             render_database_analysis()
 
+    elif page == "Finance Dashboard":
+        st.markdown("<div class='page-title'>Finance Dashboard</div>", unsafe_allow_html=True)
+        from finance_dashboard import render_finance_dashboard
+        render_finance_dashboard()
+
     elif page == "Add Data":
         st.markdown("<div class='page-title'>Add Data</div>", unsafe_allow_html=True)
         if st.session_state["user_role"] in ["Admin", "Requester"]:
@@ -150,16 +164,10 @@ else:
         else:
             st.warning("You do not have permission to access this page.")
 
-   elif page == "User Profiles":
-    st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
-    if st.session_state["user_role"] == "Admin":
-        from user_profiles import render_user_profiles
-        render_user_profiles()
-    else:
-        st.warning("You do not have permission to access this page.")
-
-elif page == "Finance Dashboard":
-    st.markdown("<div class='page-title'>Finance Dashboard</div>", unsafe_allow_html=True)
-    from finance_dashboard import render_finance_dashboard
-    render_finance_dashboard()
-
+    elif page == "User Profiles":
+        st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
+        if st.session_state["user_role"] == "Admin":
+            from user_profiles import render_user_profiles
+            render_user_profiles()
+        else:
+            st.warning("You do not have permission to access this page.")
