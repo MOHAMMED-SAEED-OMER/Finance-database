@@ -16,7 +16,7 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch all pending payments
-@st.cache_data(ttl=0)
+@st.cache_data(ttl=0)  # No caching to ensure fresh data
 def fetch_pending_payments():
     try:
         client = load_credentials()
@@ -120,7 +120,7 @@ def render_payment_page():
                     if issue_payment(sheet, request["TRX ID"]):
                         st.session_state["issued_payment"] = request["TRX ID"]
                         st.success(f"Payment issued for request {request['TRX ID']}.")
-                        st.experimental_rerun()
+                        st.rerun()  # This will rerun the app and remove the issued payment
 
     except Exception as e:
         st.error(f"Error loading payment page: {e}")
