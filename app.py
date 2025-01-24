@@ -150,14 +150,16 @@ else:
         else:
             st.warning("You do not have permission to access this page.")
 
-    elif page == "User Profiles":
-        st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
-        if st.session_state["user_role"] == "Admin":
-            from user_profiles import render_user_profiles
-            render_user_profiles()
-        else:
-            st.warning("You do not have permission to access this page.")
+   elif page == "User Profiles":
+    st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
+    if st.session_state["user_role"] == "Admin":
+        from user_profiles import render_user_profiles
+        render_user_profiles()
+    else:
+        st.warning("You do not have permission to access this page.")
+
 elif page == "Finance Dashboard":
     st.markdown("<div class='page-title'>Finance Dashboard</div>", unsafe_allow_html=True)
     from finance_dashboard import render_finance_dashboard
     render_finance_dashboard()
+
