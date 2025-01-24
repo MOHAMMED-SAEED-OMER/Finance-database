@@ -31,21 +31,20 @@ def fetch_finance_data():
         st.error(f"Error loading the finance data: {e}")
         return pd.DataFrame()
 
-# Render Finance Dashboard with Pivot Table Style
+# Render Finance Dashboard
 def render_finance_dashboard():
-    st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💼 Finance Dashboard</h1>", unsafe_allow_html=True)
-
     df = fetch_finance_data()
     if df.empty:
         st.warning("No financial data available.")
         return
 
-    # Calculate financial metrics based on the new correct formula
-    total_liquidated = df["Liquidated amount"].sum()
+    # Calculate financial metrics
+    total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
+    total_expense = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
-    available_funds = total_liquidated - issued_funds
+    available_funds = (total_income - abs(total_expense)) - issued_funds
 
-    # Custom CSS for styling the pivot table layout
+    # Custom CSS for pivot table style layout
     st.markdown("""
         <style>
             .pivot-container {
@@ -80,9 +79,15 @@ def render_finance_dashboard():
 
     # Income Section
     with st.container():
-        with st.expander(f"💰 Total Liquidated Income: {total_liquidated:,.0f} IQD", expanded=False):
+        with st.expander(f"💰 Total Income: {total_income:,.0f} IQD", expanded=False):
             income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
             st.dataframe(income_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
+
+    # Expense Section
+    with st.container():
+        with st.expander(f"💸 Total Expense: {abs(total_expense):,.0f} IQD", expanded=False):
+            expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+            st.dataframe(expense_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
 
     # Issued Funds Section (Pending Liquidation)
     with st.container():
