@@ -83,8 +83,14 @@ def render_liquidation_page():
             st.info("No pending liquidations to process.")
             return
 
+        # Create a list to track processed requests
+        processed_requests = []
+
         # Accordion style expander for pending liquidations
         for index, request in pending_liquidations.iterrows():
+            if st.session_state.get("processed_liquidation") == request["TRX ID"]:
+                continue  # Skip already processed items
+
             with st.expander(f"Request ID: {request['TRX ID']} - {request['Project name']}"):
                 st.write(f"**Budget Line:** {request['Budget line']}")
                 st.write(f"**Purpose:** {request['Purpose']}")
@@ -117,8 +123,13 @@ def render_liquidation_page():
                         success = process_liquidation(sheet, request["TRX ID"], liquidated_amount, invoices_link)
                         if success:
                             st.session_state["processed_liquidation"] = request["TRX ID"]
+                            processed_requests.append(request["TRX ID"])
                             st.success(f"Liquidation completed for TRX ID: {request['TRX ID']}")
                             st.rerun()
+
+        # Remove processed requests from pending list
+        if processed_requests:
+            pending_liquidations = pending_liquidations[~pending_liquidations["TRX ID"].isin(processed_requests)]
 
         # Display message for recent liquidation
         if st.session_state["processed_liquidation"]:
