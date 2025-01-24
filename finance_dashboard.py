@@ -22,78 +22,87 @@ def fetch_finance_data():
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
 
-        # Convert Liquidated amount to numeric
+        # Convert necessary columns to numeric
         df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors="coerce").fillna(0)
+        df["Requested Amount"] = pd.to_numeric(df["Requested Amount"], errors="coerce").fillna(0)
+
         return df
     except Exception as e:
         st.error(f"Error loading the finance data: {e}")
         return pd.DataFrame()
 
-# Render Finance Dashboard with enhanced UI
+# Render Finance Dashboard with Pivot Table Style
 def render_finance_dashboard():
-    st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💰 Finance Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💼 Finance Dashboard</h1>", unsafe_allow_html=True)
 
     df = fetch_finance_data()
     if df.empty:
         st.warning("No financial data available.")
         return
 
-    # Calculate totals
+    # Calculate financial metrics
     total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
     total_expenses = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
-    available_funds = total_income + total_expenses  # Expenses are negative values
+    
+    issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
+    available_funds = total_income - total_expenses - issued_funds
 
-    # Custom CSS for styling
+    # Custom CSS for styling the pivot table layout
     st.markdown("""
         <style>
-            .metric-card {
-                border-radius: 15px;
-                padding: 20px;
+            .pivot-container {
                 background-color: #F3F4F6;
-                text-align: center;
-                font-size: 22px;
-                font-weight: bold;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 10px;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             }
-            .metric-title {
+            .pivot-title {
+                font-size: 22px;
+                font-weight: bold;
                 color: #1E3A8A;
-                font-size: 20px;
-                font-weight: bold;
-                margin-bottom: 10px;
+                cursor: pointer;
             }
-            .metric-value {
-                color: #4CAF50;
-                font-size: 36px;
-                font-weight: bold;
-            }
-            .expand-section {
-                background-color: #E3F2FD;
-                border-radius: 15px;
-                padding: 15px;
+            .pivot-content {
                 margin-top: 15px;
                 font-size: 18px;
-                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                padding-left: 15px;
+                background-color: #E3F2FD;
+                border-radius: 10px;
+                padding: 10px;
+            }
+            .pivot-metric {
+                font-size: 24px;
+                font-weight: bold;
+                color: #4CAF50;
+                text-align: right;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # Layout for the three key metrics
-    col1, col2, col3 = st.columns(3)
+    # Income Section
+    with st.container():
+        with st.expander(f"💰 Total Income: {total_income:,.0f} IQD", expanded=False):
+            income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+            st.dataframe(income_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
 
-    with col1:
-        if st.button(f"💰 Total Income: {total_income:,.0f} IQD", key="income_btn"):
-            with st.expander("Income Breakdown by Category"):
-                income_categories = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-                st.write(income_categories)
+    # Expense Section
+    with st.container():
+        with st.expander(f"📉 Total Expenses: {total_expenses:,.0f} IQD", expanded=False):
+            expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+            st.dataframe(expense_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
 
-    with col2:
-        if st.button(f"📉 Total Expenses: {total_expenses:,.0f} IQD", key="expense_btn"):
-            with st.expander("Expense Breakdown by Category"):
-                expense_categories = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-                st.write(expense_categories)
+    # Issued Funds Section
+    with st.container():
+        with st.expander(f"🏦 Issued Funds (Pending Liquidation): {issued_funds:,.0f} IQD", expanded=False):
+            issued_funds_details = df[df["Liquidation status"].str.lower() == "to be liquidated"][["TRX ID", "Requested Amount"]]
+            st.dataframe(issued_funds_details.style.format({"Requested Amount": "{:,.0f} IQD"}), use_container_width=True)
 
-    with col3:
-        if st.button(f"🏦 Available Funds: {available_funds:,.0f} IQD", key="funds_btn"):
-            with st.expander("Available Funds Breakdown by Payment Method"):
-                available_funds_df = df[df["TRX type"].str.lower() == "income"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
-                st.write(available_funds_df)
+    # Available Funds Section
+    with st.container():
+        with st.expander(f"💵 Available Funds Now: {available_funds:,.0f} IQD", expanded=False):
+            funds_distribution = df[df["TRX type"].str.lower() == "income"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
+            st.dataframe(funds_distribution.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
+
+if __name__ == "__main__":
+    render_finance_dashboard()
