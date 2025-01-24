@@ -45,7 +45,7 @@ def render_finance_dashboard():
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
     available_funds = (total_income - abs(total_expense)) - issued_funds
 
-    # Custom CSS for cards UI
+    # Custom CSS for card design and styling
     st.markdown("""
         <style>
             .card-container {
@@ -55,40 +55,52 @@ def render_finance_dashboard():
                 gap: 20px;
             }
             .card {
-                background-color: #F3F4F6;
-                border-radius: 10px;
+                background-color: #1E3A8A;
+                border-radius: 15px;
                 padding: 30px;
-                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
                 text-align: center;
-                transition: 0.3s ease-in-out;
+                transition: all 0.3s ease-in-out;
                 width: 23%;
+                color: #fff;
             }
             .card:hover {
-                transform: scale(1.03);
+                transform: translateY(-5px);
+                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
             }
             .card-title {
                 font-size: 22px;
                 font-weight: bold;
-                color: #1E3A8A;
+                color: #F3F4F6;
                 margin-bottom: 10px;
             }
             .card-value {
                 font-size: 28px;
                 font-weight: bold;
-                color: #1E3A8A;
             }
             .card-value-negative {
                 font-size: 28px;
                 font-weight: bold;
-                color: #D32F2F;
+                color: #FF4C4C;
             }
-            .expander-content {
-                text-align: left;
+            .stButton button {
+                background-color: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                font-size: 22px;
+                color: #ffffff;
+                cursor: pointer;
+            }
+            .stButton button:hover {
+                color: #F3F4F6;
+                text-decoration: underline;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # Displaying cards in a row
+    # Display cards in a row
     st.markdown('<div class="card-container">', unsafe_allow_html=True)
 
     # Income Card
