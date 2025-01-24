@@ -80,24 +80,26 @@ def render_database():
         use_container_width=True
     )
 
-    # Export data section
-    st.markdown("### 📤 Export Data")
-    export_format = st.radio("Choose Export Format:", ["Excel", "CSV"])
-    if st.button("Download"):
-       if export_format == "Excel":
-    try:
-        import io
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-            df.to_excel(writer, index=False, sheet_name="Database")
-            writer.close()
-        st.download_button("Download Excel", output.getvalue(), file_name="database_export.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    except Exception as e:
-        st.error(f"Excel export failed: {e}")
+ # Export data section
+st.markdown("### 📤 Export Data")
+export_format = st.radio("Choose Export Format:", ["Excel", "CSV"])
 
-        elif export_format == "CSV":
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
+if st.button("Download"):
+    if export_format == "Excel":
+        try:
+            import io
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df.to_excel(writer, index=False, sheet_name="Database")
+                writer.close()
+            st.download_button("Download Excel", output.getvalue(), file_name="database_export.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        except Exception as e:
+            st.error(f"Excel export failed: {e}")
+
+    elif export_format == "CSV":
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
 
 if __name__ == "__main__":
     render_database()
+
