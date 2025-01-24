@@ -40,12 +40,10 @@ def render_finance_dashboard():
         st.warning("No financial data available.")
         return
 
-    # Calculate financial metrics
-    total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
-    total_expenses = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
-    
+    # Calculate financial metrics based on the new correct formula
+    total_liquidated = df["Liquidated amount"].sum()
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
-    available_funds = total_income - total_expenses - issued_funds
+    available_funds = total_liquidated - issued_funds
 
     # Custom CSS for styling the pivot table layout
     st.markdown("""
@@ -82,17 +80,11 @@ def render_finance_dashboard():
 
     # Income Section
     with st.container():
-        with st.expander(f"💰 Total Income: {total_income:,.0f} IQD", expanded=False):
+        with st.expander(f"💰 Total Liquidated Income: {total_liquidated:,.0f} IQD", expanded=False):
             income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
             st.dataframe(income_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
 
-    # Expense Section
-    with st.container():
-        with st.expander(f"📉 Total Expenses: {total_expenses:,.0f} IQD", expanded=False):
-            expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-            st.dataframe(expense_breakdown.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
-
-    # Issued Funds Section
+    # Issued Funds Section (Pending Liquidation)
     with st.container():
         with st.expander(f"🏦 Issued Funds (Pending Liquidation): {issued_funds:,.0f} IQD", expanded=False):
             issued_funds_details = df[df["Liquidation status"].str.lower() == "to be liquidated"][["TRX ID", "Requested Amount"]]
@@ -101,7 +93,7 @@ def render_finance_dashboard():
     # Available Funds Section
     with st.container():
         with st.expander(f"💵 Available Funds Now: {available_funds:,.0f} IQD", expanded=False):
-            funds_distribution = df[df["TRX type"].str.lower() == "income"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
+            funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
             st.dataframe(funds_distribution.style.format({"Liquidated amount": "{:,.0f} IQD"}), use_container_width=True)
 
 if __name__ == "__main__":
