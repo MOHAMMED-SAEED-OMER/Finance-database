@@ -36,26 +36,34 @@ def fetch_database():
 
 # Generate PDF file
 def generate_pdf(dataframe):
+    output = io.BytesIO()
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Finance Database Export", ln=True, align='C')
+    pdf.cell(200, 10, "Finance Database Export", ln=True, align='C')
 
+    # Adding table headers
+    pdf.set_font("Arial", style="B", size=10)
     for col in dataframe.columns:
         pdf.cell(40, 10, col, border=1)
 
     pdf.ln()
 
+    # Adding table rows
+    pdf.set_font("Arial", size=10)
     for index, row in dataframe.iterrows():
         for col in dataframe.columns:
             pdf.cell(40, 10, str(row[col]), border=1)
         pdf.ln()
 
-    output = io.BytesIO()
-    pdf.output(output, 'F')
-    return output.getvalue()
+    # Save the PDF to the buffer
+    pdf.output(output)
+    pdf_data = output.getvalue()
+    output.close()
+    return pdf_data
+
 
 # Render the Database Page
 def render_database():
@@ -110,32 +118,50 @@ def render_database():
         use_container_width=True
     )
 
-    # Export data section at the top
-    st.markdown("### Export Data")
-    col1, col2 = st.columns(2)
-    with col1:
-        export_format = st.radio("Choose Export Format:", ["Excel", "CSV", "PDF"], horizontal=True)
+  # Export data section at the top
+st.markdown("### Export Data")
+col1, col2 = st.columns(2)
 
-    with col2:
-        if st.button("Download"):
-            if export_format == "Excel":
-                try:
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                        filtered_df.to_excel(writer, index=False, sheet_name="Database")
-                        writer.close()
-                    st.download_button("Download Excel", output.getvalue(), file_name="database_export.xlsx",
-                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                except Exception as e:
-                    st.error(f"Excel export failed: {e}")
+with col1:
+    export_format = st.radio("Choose Export Format:", ["Excel", "CSV", "PDF"], horizontal=True)
 
-            elif export_format == "CSV":
-                csv = filtered_df.to_csv(index=False).encode("utf-8")
-                st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
+with col2:
+    if st.button("Download"):
+        if export_format == "Excel":
+            try:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                    filtered_df.to_excel(writer, index=False, sheet_name="Database")
+                    writer.close()
+                st.download_button(
+                    "Download Excel", 
+                    output.getvalue(), 
+                    file_name="database_export.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except Exception as e:
+                st.error(f"Excel export failed: {e}")
 
-            elif export_format == "PDF":
+        elif export_format == "CSV":
+            csv = filtered_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "Download CSV", 
+                csv, 
+                file_name="database_export.csv", 
+                mime="text/csv"
+            )
+
+        elif export_format == "PDF":
+            try:
                 pdf_data = generate_pdf(filtered_df)
-                st.download_button("Download PDF", pdf_data, file_name="database_export.pdf", mime="application/pdf")
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf_data,
+                    file_name="database_export.pdf",
+                    mime="application/pdf",
+                )
+            except Exception as e:
+                st.error(f"PDF export failed: {e}")
 
 if __name__ == "__main__":
     render_database()
