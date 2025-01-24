@@ -51,23 +51,28 @@ def render_database_analysis():
         st.warning("No data available for analysis.")
         return
 
-    # Prepare data for waterfall chart
-    waterfall_df = df.pivot_table(index="Month", columns="TRX type", values="Liquidated amount", fill_value=0).reset_index()
-    waterfall_df["Net Change"] = waterfall_df.get("Income", 0) - waterfall_df.get("Expense", 0)
-    waterfall_df["Cumulative Total"] = waterfall_df["Net Change"].cumsum()
+    # Prepare data for waterfall chart (monthly net income = income - expense)
+    income_df = df[df["TRX type"] == "Income"].groupby("Month")["Liquidated amount"].sum().reset_index()
+    expense_df = df[df["TRX type"] == "Expense"].groupby("Month")["Liquidated amount"].sum().reset_index()
 
+    # Merge income and expense to calculate monthly net change
+    summary_df = pd.merge(income_df, expense_df, on="Month", how="outer", suffixes=("_income", "_expense")).fillna(0)
+    summary_df["Net Change"] = summary_df["Liquidated amount_income"] - summary_df["Liquidated amount_expense"]
+
+    # Create waterfall chart data
     waterfall_chart_data = pd.DataFrame({
-        "Month": ["Starting Balance"] + waterfall_df["Month"].tolist(),
-        "Amount": [0] + waterfall_df["Net Change"].tolist()
+        "Month": summary_df["Month"],
+        "Net Change": summary_df["Net Change"]
     })
 
-    # Plotly Waterfall Chart using graph_objects
+    # Plotly Waterfall Chart
     waterfall_fig = go.Figure(go.Waterfall(
         name="Funds Flow",
         orientation="v",
-        measure=["absolute"] + ["relative"] * (len(waterfall_chart_data) - 1),
+        measure=["relative"] * len(waterfall_chart_data),
         x=waterfall_chart_data["Month"],
-        y=waterfall_chart_data["Amount"],
+        y=waterfall_chart_data["Net Change"],
+        text=waterfall_chart_data["Net Change"].apply(lambda x: f"{x:,.0f} IQD"),
         textposition="outside",
         connector=dict(line=dict(color="rgb(63, 63, 63)")),
     ))
@@ -75,8 +80,8 @@ def render_database_analysis():
     waterfall_fig.update_layout(
         title="Monthly Funds Flow Waterfall Chart",
         xaxis_title="Month",
-        yaxis_title="Amount (IQD)",
-        showlegend=True
+        yaxis_title="Net Income (IQD)",
+        showlegend=False
     )
 
     st.plotly_chart(waterfall_fig, use_container_width=True)
