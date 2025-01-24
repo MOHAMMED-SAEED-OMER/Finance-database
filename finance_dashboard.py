@@ -29,7 +29,7 @@ def fetch_finance_data():
         st.error(f"Error loading the finance data: {e}")
         return pd.DataFrame()
 
-# Render Finance Dashboard with improved UI
+# Render Finance Dashboard with enhanced UI
 def render_finance_dashboard():
     st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💰 Finance Dashboard</h1>", unsafe_allow_html=True)
 
@@ -47,11 +47,11 @@ def render_finance_dashboard():
     st.markdown("""
         <style>
             .metric-card {
-                border-radius: 10px;
+                border-radius: 15px;
                 padding: 20px;
                 background-color: #F3F4F6;
                 text-align: center;
-                font-size: 24px;
+                font-size: 22px;
                 font-weight: bold;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
             }
@@ -68,7 +68,7 @@ def render_finance_dashboard():
             }
             .expand-section {
                 background-color: #E3F2FD;
-                border-radius: 10px;
+                border-radius: 15px;
                 padding: 15px;
                 margin-top: 15px;
                 font-size: 18px;
@@ -81,29 +81,19 @@ def render_finance_dashboard():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("<div class='metric-card'><div class='metric-title'>Total Income</div><div class='metric-value'>"
-                    f"{total_income:,.0f} IQD</div></div>", unsafe_allow_html=True)
+        if st.button(f"💰 Total Income: {total_income:,.0f} IQD", key="income_btn"):
+            with st.expander("Income Breakdown by Category"):
+                income_categories = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+                st.write(income_categories)
 
     with col2:
-        st.markdown("<div class='metric-card'><div class='metric-title'>Total Expenses</div><div class='metric-value' style='color: #E53935;'>"
-                    f"{total_expenses:,.0f} IQD</div></div>", unsafe_allow_html=True)
+        if st.button(f"📉 Total Expenses: {total_expenses:,.0f} IQD", key="expense_btn"):
+            with st.expander("Expense Breakdown by Category"):
+                expense_categories = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
+                st.write(expense_categories)
 
     with col3:
-        st.markdown("<div class='metric-card'><div class='metric-title'>Available Funds</div><div class='metric-value' style='color: #FB8C00;'>"
-                    f"{available_funds:,.0f} IQD</div></div>", unsafe_allow_html=True)
-
-    # Expandable sections for category breakdown
-    with st.expander("🔍 View Income Breakdown"):
-        income_categories = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-        st.markdown("<div class='expand-section'>", unsafe_allow_html=True)
-        st.write(income_categories)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with st.expander("🔍 View Expense Breakdown"):
-        expense_categories = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-        st.markdown("<div class='expand-section'>", unsafe_allow_html=True)
-        st.write(expense_categories)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    render_finance_dashboard()
+        if st.button(f"🏦 Available Funds: {available_funds:,.0f} IQD", key="funds_btn"):
+            with st.expander("Available Funds Breakdown by Payment Method"):
+                available_funds_df = df[df["TRX type"].str.lower() == "income"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
+                st.write(available_funds_df)
