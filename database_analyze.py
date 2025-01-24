@@ -29,9 +29,6 @@ def fetch_data():
         # Convert liquidated amount to numeric and handle errors
         df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors='coerce').fillna(0)
 
-        # Filter relevant rows (exclude rows with 0 liquidated amount)
-        df = df[df["Liquidated amount"] != 0]
-
         return df
     except Exception as e:
         st.error(f"Error loading data: {e}")
@@ -48,29 +45,26 @@ def render_database_analysis():
         st.warning("No data available for analysis.")
         return
 
-    # Calculate monthly total income and expenses
-    income_df = df[df["TRX type"].str.lower() == "income"].groupby("Month")["Liquidated amount"].sum().reset_index()
-    expense_df = df[df["TRX type"].str.lower() == "expense"].groupby("Month")["Liquidated amount"].sum().reset_index()
+    # Group data by month, summing the already signed amounts (positive for income, negative for expense)
+    monthly_summary = df.groupby("Month")["Liquidated amount"].sum().reset_index()
 
-    # Merge income and expenses to calculate net changes
-    summary_df = pd.merge(income_df, expense_df, on="Month", how="outer", suffixes=("_income", "_expense")).fillna(0)
-    summary_df["Net Change"] = summary_df["Liquidated amount_income"] - summary_df["Liquidated amount_expense"]
+    # Sort months chronologically
+    monthly_summary = monthly_summary.sort_values("Month")
 
-    # Sort the months in chronological order
-    summary_df = summary_df.sort_values(by="Month")
+    # Extract month names and values
+    months = monthly_summary["Month"].tolist()
+    values = monthly_summary["Liquidated amount"].tolist()
 
-    # Waterfall chart values
-    months = summary_df["Month"].tolist()
-    changes = summary_df["Net Change"].tolist()
+    # Waterfall chart - show cumulative effect month by month
+    cumulative_values = [sum(values[:i+1]) for i in range(len(values))]
 
-    # Create waterfall chart with cumulative changes
     waterfall_fig = go.Figure(go.Waterfall(
         name="Funds Flow",
         orientation="v",
-        measure=["relative"] * len(changes) + ["total"],
+        measure=["relative"] * len(values) + ["total"],
         x=months + ["Total"],
-        y=changes + [sum(changes)],
-        text=[f"{val:,.0f} IQD" for val in changes] + [f"{sum(changes):,.0f} IQD"],
+        y=values + [sum(values)],  # Add total to the end
+        text=[f"{val:,.0f} IQD" for val in values] + [f"{sum(values):,.0f} IQD"],
         textposition="outside",
         decreasing=dict(marker=dict(color="red")),
         increasing=dict(marker=dict(color="green")),
