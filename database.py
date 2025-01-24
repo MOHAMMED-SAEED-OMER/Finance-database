@@ -31,7 +31,6 @@ def fetch_database():
 
 # Render the Database Page
 def render_database():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Database Viewer</h2>", unsafe_allow_html=True)
     st.write("View and manage all financial records efficiently.")
 
     df = fetch_database()
