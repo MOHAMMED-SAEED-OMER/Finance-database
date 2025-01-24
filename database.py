@@ -3,6 +3,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import io
+from fpdf import FPDF
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -32,6 +33,29 @@ def fetch_database():
     except Exception as e:
         st.error(f"Error loading the database: {e}")
         return pd.DataFrame()
+
+# Generate PDF file
+def generate_pdf(dataframe):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Finance Database Export", ln=True, align='C')
+
+    for col in dataframe.columns:
+        pdf.cell(40, 10, col, border=1)
+
+    pdf.ln()
+
+    for index, row in dataframe.iterrows():
+        for col in dataframe.columns:
+            pdf.cell(40, 10, str(row[col]), border=1)
+        pdf.ln()
+
+    output = io.BytesIO()
+    pdf.output(output, 'F')
+    return output.getvalue()
 
 # Render the Database Page
 def render_database():
@@ -90,7 +114,7 @@ def render_database():
     st.markdown("### Export Data")
     col1, col2 = st.columns(2)
     with col1:
-        export_format = st.radio("Choose Export Format:", ["Excel", "CSV"], horizontal=True)
+        export_format = st.radio("Choose Export Format:", ["Excel", "CSV", "PDF"], horizontal=True)
 
     with col2:
         if st.button("Download"):
@@ -108,6 +132,10 @@ def render_database():
             elif export_format == "CSV":
                 csv = filtered_df.to_csv(index=False).encode("utf-8")
                 st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
+
+            elif export_format == "PDF":
+                pdf_data = generate_pdf(filtered_df)
+                st.download_button("Download PDF", pdf_data, file_name="database_export.pdf", mime="application/pdf")
 
 if __name__ == "__main__":
     render_database()
