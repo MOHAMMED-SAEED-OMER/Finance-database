@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
+import plotly.express as px
 from google.oauth2.service_account import Credentials
 
 # Google Sheets setup
@@ -33,7 +34,6 @@ def fetch_finance_data():
 
 # Render Finance Dashboard
 def render_finance_dashboard():
-    
     df = fetch_finance_data()
     if df.empty:
         st.warning("No financial data available.")
@@ -43,111 +43,100 @@ def render_finance_dashboard():
     total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
     total_expense = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
     issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
-    available_funds = (total_income - abs(total_expense)) - issued_funds
+    available_funds = df["Liquidated amount"].sum() - issued_funds
 
-    # Custom CSS for card design and styling
+    # Prepare data for graphs
+    monthly_summary = df.groupby("Request submission date").agg(
+        {"Liquidated amount": "sum", "Requested Amount": "sum"}
+    ).reset_index()
+
+    # Create mini graphs for visualization
+    income_chart = px.line(
+        df[df["TRX type"].str.lower() == "income"],
+        x="Request submission date",
+        y="Liquidated amount",
+        title="Income Trend",
+        height=150
+    )
+
+    expense_chart = px.line(
+        df[df["TRX type"].str.lower() == "expense"],
+        x="Request submission date",
+        y="Liquidated amount",
+        title="Expense Trend",
+        height=150
+    )
+
+    issued_chart = px.line(
+        df[df["Liquidation status"].str.lower() == "to be liquidated"],
+        x="Request submission date",
+        y="Requested Amount",
+        title="Issued Funds Trend",
+        height=150
+    )
+
+    available_funds_chart = px.line(
+        monthly_summary,
+        x="Request submission date",
+        y="Liquidated amount",
+        title="Available Funds Trend",
+        height=150
+    )
+
+    # Custom CSS for enhanced UI
     st.markdown("""
         <style>
-            .card-container {
-                display: flex;
-                justify-content: space-between;
-                flex-wrap: wrap;
-                gap: 20px;
-            }
-            .card {
-                background-color: #1E3A8A;
-                border-radius: 15px;
-                padding: 30px;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                transition: all 0.3s ease-in-out;
-                width: 23%;
-                color: #fff;
-            }
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-            }
-            .card-title {
+            .finance-header {
                 font-size: 22px;
                 font-weight: bold;
-                color: #F3F4F6;
+                color: #1E3A8A;
                 margin-bottom: 10px;
+                border-bottom: 2px solid #1E3A8A;
+                padding-bottom: 5px;
             }
-            .card-value {
-                font-size: 28px;
+            .finance-box {
+                background-color: #F3F4F6;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 10px;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                font-size: 24px;
                 font-weight: bold;
+                text-align: center;
+                color: #1E3A8A;
             }
-            .card-value-negative {
-                font-size: 28px;
+            .metric-value {
+                font-size: 30px;
                 font-weight: bold;
-                color: #FF4C4C;
-            }
-            .stButton button {
-                background-color: transparent;
-                border: none;
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-                font-size: 22px;
-                color: #ffffff;
-                cursor: pointer;
-            }
-            .stButton button:hover {
-                color: #F3F4F6;
-                text-decoration: underline;
+                color: #1E3A8A;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # Display cards in a row
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    # Layout with columns for the finance overview
+    col1, col2 = st.columns(2)
 
-    # Income Card
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    if st.button(f"Total Income"):
-        with st.expander("Income Breakdown"):
-            income_breakdown = df[df["TRX type"].str.lower() == "income"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-            income_breakdown["Liquidated amount"] = income_breakdown["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
-            st.dataframe(income_breakdown)
-    st.markdown(f'<div class="card-title">Total Income</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-value">{total_income:,.0f} IQD</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col1:
+        st.markdown("<div class='finance-header'>Total Income</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='finance-box'>{total_income:,.0f} IQD</div>", unsafe_allow_html=True)
+        st.plotly_chart(income_chart, use_container_width=True)
 
-    # Expense Card
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    if st.button(f"Total Expenses"):
-        with st.expander("Expense Breakdown"):
-            expense_breakdown = df[df["TRX type"].str.lower() == "expense"].groupby("TRX category")["Liquidated amount"].sum().reset_index()
-            expense_breakdown["Liquidated amount"] = expense_breakdown["Liquidated amount"].apply(lambda x: f"({abs(x):,.0f}) IQD")
-            st.dataframe(expense_breakdown)
-    st.markdown(f'<div class="card-title">Total Expenses</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-value-negative">({abs(total_expense):,.0f}) IQD</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown("<div class='finance-header'>Total Expense</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='finance-box'>({abs(total_expense):,.0f}) IQD</div>", unsafe_allow_html=True)
+        st.plotly_chart(expense_chart, use_container_width=True)
 
-    # Issued Funds Card
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    if st.button(f"Issued Funds"):
-        with st.expander("Issued Funds Details"):
-            issued_funds_details = df[df["Liquidation status"].str.lower() == "to be liquidated"][["TRX ID", "Requested Amount"]]
-            issued_funds_details["Requested Amount"] = issued_funds_details["Requested Amount"].apply(lambda x: f"({x:,.0f}) IQD")
-            st.dataframe(issued_funds_details)
-    st.markdown(f'<div class="card-title">Issued Funds</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-value-negative">({issued_funds:,.0f}) IQD</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    col3, col4 = st.columns(2)
 
-    # Available Funds Card
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    if st.button(f"Available Funds"):
-        with st.expander("Funds Distribution"):
-            funds_distribution = df[df["Liquidation status"].str.lower() == "liquidated"].groupby("Payment method")["Liquidated amount"].sum().reset_index()
-            funds_distribution["Liquidated amount"] = funds_distribution["Liquidated amount"].apply(lambda x: f"{x:,.0f} IQD")
-            st.dataframe(funds_distribution)
-    st.markdown(f'<div class="card-title">Available Funds</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card-value">{available_funds:,.0f} IQD</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown("<div class='finance-header'>Issued Funds</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='finance-box'>({issued_funds:,.0f}) IQD</div>", unsafe_allow_html=True)
+        st.plotly_chart(issued_chart, use_container_width=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col4:
+        st.markdown("<div class='finance-header'>Available Funds</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='finance-box'>{available_funds:,.0f} IQD</div>", unsafe_allow_html=True)
+        st.plotly_chart(available_funds_chart, use_container_width=True)
 
 if __name__ == "__main__":
     render_finance_dashboard()
