@@ -33,7 +33,7 @@ def fetch_data():
         df = df[df["Liquidated amount"] != 0]
 
         # Group by month and transaction type
-        monthly_summary = df.groupby(["Month", "TRX type"])["Liquidated amount"].sum().unstack(fill_value=0).reset_index()
+        monthly_summary = df.groupby(["Month", "TRX type"])["Liquidated amount"].sum().reset_index()
 
         return monthly_summary
     except Exception as e:
@@ -43,7 +43,7 @@ def fetch_data():
 # Render database analysis page
 def render_database_analysis():
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Funds Flow Analysis</h2>", unsafe_allow_html=True)
-    st.write("Analyze the monthly income and expenses trends.")
+    st.write("Analyze the monthly income and expenses trends using a waterfall chart.")
 
     df = fetch_data()
 
@@ -51,33 +51,32 @@ def render_database_analysis():
         st.warning("No data available for analysis.")
         return
 
-    # Ensure the columns exist in the dataframe
-    if 'Income' not in df.columns:
-        df['Income'] = 0
-    if 'Expense' not in df.columns:
-        df['Expense'] = 0
+    # Prepare data for waterfall chart
+    waterfall_df = df.pivot_table(index="Month", columns="TRX type", values="Liquidated amount", fill_value=0).reset_index()
+    waterfall_df["Net Change"] = waterfall_df.get("Income", 0) - waterfall_df.get("Expense", 0)
+    waterfall_df["Cumulative Total"] = waterfall_df["Net Change"].cumsum()
 
-    # Plotly visualization
-    line_fig = px.line(
-        df,
-        x="Month",
-        y=["Income", "Expense"],
-        labels={"value": "Amount (IQD)", "Month": "Month"},
-        title="Monthly Income vs Expenses",
-        markers=True
-    )
-    st.plotly_chart(line_fig, use_container_width=True)
+    waterfall_chart_data = pd.DataFrame({
+        "Month": ["Starting Balance"] + waterfall_df["Month"].tolist(),
+        "Amount": [0] + waterfall_df["Net Change"].tolist(),
+        "Cumulative Total": [0] + waterfall_df["Cumulative Total"].tolist(),
+        "Category": ["Starting Balance"] + ["Net Change" for _ in waterfall_df["Month"]]
+    })
 
-    # Bar chart visualization
-    bar_fig = px.bar(
-        df,
+    # Plotly Waterfall Chart
+    fig = px.waterfall(
+        waterfall_chart_data,
         x="Month",
-        y=["Income", "Expense"],
-        title="Income and Expenses Breakdown",
-        barmode="group",
-        labels={"value": "Amount (IQD)", "Month": "Month"},
+        y="Amount",
+        text="Cumulative Total",
+        title="Monthly Funds Flow Waterfall Chart",
+        labels={"Amount": "Amount (IQD)", "Month": "Month"},
+        connector_visible=True
     )
-    st.plotly_chart(bar_fig, use_container_width=True)
+
+    fig.update_traces(textposition="outside")
+
+    st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     render_database_analysis()
