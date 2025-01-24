@@ -141,10 +141,10 @@ def render_finance_dashboard():
 
     col3, col4 = st.columns(2)
 
-with col3:
-    st.markdown("<div class='finance-header'>Issued Funds</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='finance-box'>({abs(issued_funds):,.0f}) IQD</div>", unsafe_allow_html=True)
-    st.plotly_chart(issued_chart, use_container_width=True)
+    with col3:
+        st.markdown("<div class='finance-header'>Issued Funds</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='finance-box'>({issued_funds:,.0f}) IQD</div>", unsafe_allow_html=True)
+        st.plotly_chart(issued_chart, use_container_width=True)
 
     with col4:
         st.markdown("<div class='finance-header'>Available Funds</div>", unsafe_allow_html=True)
