@@ -80,3 +80,4 @@ def render_database_analysis():
 
 if __name__ == "__main__":
     render_database_analysis()
+
