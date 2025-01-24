@@ -24,8 +24,9 @@ def fetch_database():
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
 
-        # Convert 'Requested Amount' to formatted numbers
-        df["Requested Amount"] = df["Requested Amount"].apply(lambda x: f"{int(x):,} IQD")
+        # Ensure 'Requested Amount' has no empty or invalid values
+        df["Requested Amount"] = pd.to_numeric(df["Requested Amount"], errors="coerce").fillna(0).astype(int)
+        df["Requested Amount"] = df["Requested Amount"].apply(lambda x: f"{x:,} IQD")
 
         return df
     except Exception as e:
