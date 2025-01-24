@@ -26,7 +26,6 @@ def fetch_pending_payments():
         # Convert data to DataFrame and filter for pending payments
         df = pd.DataFrame(data)
         pending_payments = df[df["Payment status"].str.lower() == "pending"]
-
         return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
@@ -49,7 +48,7 @@ def issue_payment(sheet, trx_id):
                 payment_date_col = headers.index("Payment date") + 1
                 liquidation_status_col = headers.index("Liquidation status") + 1
 
-                # Update the sheet with payment details
+                # Update payment details
                 sheet.update_cell(row_index, payment_status_col, "Issued")
                 sheet.update_cell(row_index, payment_date_col, payment_date)
                 sheet.update_cell(row_index, liquidation_status_col, "To be liquidated")
@@ -66,10 +65,6 @@ def render_payment_page():
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>💵 Payment Processing</h2>", unsafe_allow_html=True)
     st.write("View and process pending payments.")
 
-    # Session state to track issued payments
-    if "issued_payment" not in st.session_state:
-        st.session_state["issued_payment"] = None
-
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
@@ -81,26 +76,20 @@ def render_payment_page():
             st.info("No pending payments to process.")
             return
 
-        st.markdown("<div class='sub-text'>Review the following pending payments:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='sub-text'>Review the pending payments below:</div>", unsafe_allow_html=True)
 
         # Apply CSS for better styling
         st.markdown("""
             <style>
-                .card {
-                    background-color: #f9f9f9;
-                    padding: 15px;
-                    border-radius: 10px;
-                    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-                    margin-bottom: 15px;
-                }
-                .card-header {
+                .expander-header {
                     font-size: 18px;
                     font-weight: bold;
                     color: #1E3A8A;
                 }
-                .card-body {
+                .expander-body {
                     font-size: 16px;
                     color: #333;
+                    margin-bottom: 10px;
                 }
                 .btn-approve {
                     background-color: #28a745;
@@ -116,12 +105,10 @@ def render_payment_page():
             </style>
         """, unsafe_allow_html=True)
 
-        # Loop through each pending payment and display in card format
+        # Display each pending payment inside an expander
         for _, request in pending_payments.iterrows():
-            with st.container():
-                st.markdown("<div class='card'>", unsafe_allow_html=True)
-                st.markdown(f"<div class='card-header'>Request ID: {request['TRX ID']} - {request['Project name']}</div>", unsafe_allow_html=True)
-                st.markdown("<div class='card-body'>", unsafe_allow_html=True)
+            with st.expander(f"Request ID: {request['TRX ID']} - {request['Project name']}"):
+                st.markdown("<div class='expander-body'>", unsafe_allow_html=True)
                 st.write(f"**Budget Line:** {request['Budget line']}")
                 st.write(f"**Purpose:** {request['Purpose']}")
                 st.write(f"**Requested Amount:** {int(request['Requested Amount']):,} IQD")
@@ -135,10 +122,8 @@ def render_payment_page():
                         st.session_state["issued_payment"] = request["TRX ID"]
                         st.rerun()
 
-                st.markdown("</div>", unsafe_allow_html=True)
-
         # Display a message if a payment was recently issued
-        if st.session_state["issued_payment"]:
+        if "issued_payment" in st.session_state and st.session_state["issued_payment"]:
             st.info(f"Recently issued payment for TRX ID: {st.session_state['issued_payment']}")
 
     except Exception as e:
