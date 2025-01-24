@@ -32,34 +32,41 @@ def fetch_pending_liquidations():
         return pd.DataFrame()  # Return empty DataFrame on error
 
 # Update liquidation status, amount, invoices, and returned amount
-def process_liquidation(sheet, row_index, liquidated_amount, invoices_link, requested_amount):
+def process_liquidation(sheet, trx_id, liquidated_amount, invoices_link):
     try:
         baghdad_tz = pytz.timezone("Asia/Baghdad")
         liquidation_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        # Calculate returned amount (Liquidated amount - Requested amount)
-        returned_amount = liquidated_amount - requested_amount
+        # Get all data to find the row index
+        data = sheet.get_all_values()
+        headers = data[0]  
+        trx_id_col = headers.index("TRX ID") + 1  
 
-        # Update Liquidation Status
-        sheet.update_cell(row_index, 17, "Liquidated")  # Column 17: Liquidation Status
-        # Update Liquidated Amount
-        sheet.update_cell(row_index, 18, liquidated_amount)  # Column 18: Liquidated Amount
-        # Update Liquidation Date
-        sheet.update_cell(row_index, 19, liquidation_date)  # Column 19: Liquidation Date
-        # Update Liquidated Invoices
-        sheet.update_cell(row_index, 20, invoices_link)  # Column 20: Liquidated Invoices
-        # Update Returned Amount
-        sheet.update_cell(row_index, 21, returned_amount)  # Column 21: Returned Amount
+        for i, row in enumerate(data):
+            if row[trx_id_col - 1] == trx_id:
+                row_index = i + 1  
+                requested_amount = int(row[headers.index("Requested Amount")])
 
-        return True
+                # Calculate returned amount
+                returned_amount = liquidated_amount - requested_amount
+
+                # Update cells in the sheet
+                sheet.update_cell(row_index, headers.index("Liquidation status") + 1, "Liquidated")
+                sheet.update_cell(row_index, headers.index("Liquidated amount") + 1, liquidated_amount)
+                sheet.update_cell(row_index, headers.index("Liquidation date") + 1, liquidation_date)
+                sheet.update_cell(row_index, headers.index("Liquidated invoices") + 1, invoices_link)
+                sheet.update_cell(row_index, headers.index("Returned amount") + 1, returned_amount)
+
+                return True
+        return False
     except Exception as e:
         st.error(f"Error processing liquidation: {e}")
         return False
 
 # Render Liquidation Page
 def render_liquidation_page():
-    st.title("🏦 Liquidation Processing")
-    st.write("View and process liquidations.")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>🏦 Liquidation Processing</h2>", unsafe_allow_html=True)
+    st.write("Review and process pending liquidations.")
 
     # Session state to track processed liquidations
     if "processed_liquidation" not in st.session_state:
@@ -76,39 +83,46 @@ def render_liquidation_page():
             st.info("No pending liquidations to process.")
             return
 
-        # Display pending liquidations
-        st.write("### Pending Liquidations")
-        st.dataframe(pending_liquidations)
+        # Accordion style expander for pending liquidations
+        for index, request in pending_liquidations.iterrows():
+            with st.expander(f"Request ID: {request['TRX ID']} - {request['Project name']}"):
+                st.write(f"**Budget Line:** {request['Budget line']}")
+                st.write(f"**Purpose:** {request['Purpose']}")
+                st.write(f"**Requested Amount:** {int(request['Requested Amount']):,} IQD")
+                st.write(f"**Payment Date:** {request['Payment date']}")
+                st.write(f"**Payment Method:** {request['Payment method']}")
 
-        # Select a request to process liquidation
-        trx_id = st.selectbox(
-            "Select a Request by TRX ID:",
-            options=pending_liquidations["TRX ID"].tolist(),
-        )
+                # Liquidation input fields
+                liquidated_amount = st.text_input(
+                    f"Enter Liquidated Amount (IQD) for {request['TRX ID']}",
+                    placeholder="e.g., 1,000,000"
+                )
 
-        # Find requested amount for the selected TRX ID
-        selected_row = pending_liquidations[pending_liquidations["TRX ID"] == trx_id]
-        requested_amount = selected_row["Requested Amount"].values[0]
+                invoices_link = st.text_input(
+                    f"Enter Invoice Link for {request['TRX ID']}",
+                    placeholder="Paste invoice link here"
+                )
 
-        # User inputs
-        liquidated_amount = st.number_input(
-            "Enter Liquidated Amount (negative value):", value=0.0, step=0.01
-        )
-        invoices_link = st.text_input("Enter Invoice Link:")
+                # Action button
+                col1, col2 = st.columns(2)
+                if col1.button("Confirm Liquidation", key=f"confirm_{request['TRX ID']}"):
+                    if not liquidated_amount.isdigit():
+                        st.warning("Please enter a valid amount.")
+                    elif not invoices_link.strip():
+                        st.warning("Please provide an invoice link.")
+                    else:
+                        success = process_liquidation(sheet, request["TRX ID"], int(liquidated_amount.replace(",", "")), invoices_link)
+                        if success:
+                            st.session_state["processed_liquidation"] = request["TRX ID"]
+                            st.success(f"Liquidation completed for TRX ID: {request['TRX ID']}")
+                            st.rerun()
 
-        if st.button("Process Liquidation"):
-            # Find the row index of the selected TRX ID
-            row_index = pending_liquidations[pending_liquidations["TRX ID"] == trx_id].index[0] + 2  # +2 for header and 1-based indexing
-
-            success = process_liquidation(sheet, row_index, liquidated_amount, invoices_link, requested_amount)
-            if success:
-                st.session_state["processed_liquidation"] = trx_id
-                st.success(f"Liquidation completed for request {trx_id}.")
-                st.rerun()  # Refresh page correctly
-
-        # Display a message if a liquidation was recently processed
+        # Display message for recent liquidation
         if st.session_state["processed_liquidation"]:
             st.info(f"Recently processed liquidation for TRX ID: {st.session_state['processed_liquidation']}")
 
     except Exception as e:
         st.error(f"Error loading liquidation page: {e}")
+
+if __name__ == "__main__":
+    render_liquidation_page()
