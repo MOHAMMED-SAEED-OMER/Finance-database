@@ -24,23 +24,36 @@ def fetch_pending_payments():
 
         df = pd.DataFrame(data)
 
-        # Check for correct column name
-        correct_column_name = None
-        for col in df.columns:
-            if col.strip().lower() == "payment status":
-                correct_column_name = col
-                break
+        # Standardize column names to avoid case and spacing issues
+        df.columns = df.columns.str.strip().str.lower()
 
-        if not correct_column_name:
-            st.error("Payment Status column not found in the sheet.")
+        # Define correct column keys in lowercase
+        expected_columns = {
+            "payment_status": "payment status",
+            "project_name": "project name",
+            "trx_id": "trx id",
+            "requested_amount": "requested amount",
+            "request_submission_date": "request submission date",
+        }
+
+        # Check if all expected columns exist
+        missing_columns = [col for col in expected_columns.values() if col.lower() not in df.columns]
+        if missing_columns:
+            st.error(f"Missing columns in the Google Sheet: {', '.join(missing_columns)}")
             return pd.DataFrame()
 
         # Filter for pending payments
-        pending_payments = df[df[correct_column_name].str.lower() == "pending"]
-        return pending_payments
+        pending_payments = df[df[expected_columns["payment_status"]].str.lower() == "pending"]
+
+        # Return only relevant columns with corrected case
+        return pending_payments[
+            [expected_columns["trx_id"], expected_columns["project_name"], 
+             expected_columns["requested_amount"], expected_columns["request_submission_date"]]
+        ]
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
         return pd.DataFrame()
+
 
 
 # Update payment status and date
