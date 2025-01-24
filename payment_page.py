@@ -16,50 +16,28 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch all pending payments
+@st.cache_data(ttl=60)
 def fetch_pending_payments():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
 
-        # Convert data to DataFrame
+        # Convert data to DataFrame and filter for pending payments
         df = pd.DataFrame(data)
+        pending_payments = df[df["Payment status"].str.lower() == "pending"]
 
-        # Debugging: Display available columns in the dataframe
-        st.write("Available columns in the fetched data:", df.columns.tolist())
-
-        # Ensure column names are cleaned properly
-        df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-
-        # Debugging: Display cleaned column names
-        st.write("Cleaned columns:", df.columns.tolist())
-
-        # Expected column names in lowercase and underscored format
-        required_columns = [
-            "trx_id", "payment_status", "project_name", 
-            "requested_amount", "request_submission_date"
-        ]
-
-        # Check if all required columns exist
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            st.error(f"Missing columns in the data: {missing_columns}")
-            return pd.DataFrame()
-
-        # Filter for pending payments
-        pending_payments = df[df["payment_status"].str.lower() == "pending"]
-
-        return pending_payments[["trx_id", "project_name", "requested_amount", "request_submission_date"]]
-
+        return pending_payments
     except Exception as e:
         st.error(f"Error fetching pending payments: {e}")
-        return pd.DataFrame()
+        return pd.DataFrame()  # Return empty DataFrame on error
 
 # Update payment status and date
-def issue_payment(trx_id):
+def issue_payment(sheet, trx_id):
     try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        baghdad_tz = pytz.timezone("Asia/Baghdad")
+        payment_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
+
         data = sheet.get_all_values()
         headers = data[0]
         trx_id_col = headers.index("TRX ID") + 1
@@ -67,18 +45,17 @@ def issue_payment(trx_id):
         for i, row in enumerate(data):
             if row[trx_id_col - 1] == trx_id:
                 row_index = i + 1
-                payment_status_col = headers.index("Payment Status") + 1
-                payment_date_col = headers.index("Payment Date") + 1
-                liquidation_status_col = headers.index("Liquidation Status") + 1
+                payment_status_col = headers.index("Payment status") + 1
+                payment_date_col = headers.index("Payment date") + 1
+                liquidation_status_col = headers.index("Liquidation status") + 1
 
-                baghdad_tz = pytz.timezone("Asia/Baghdad")
-                payment_date = datetime.now(baghdad_tz).strftime("%Y-%m-%d %H:%M:%S")
-
+                # Update the sheet with payment details
                 sheet.update_cell(row_index, payment_status_col, "Issued")
                 sheet.update_cell(row_index, payment_date_col, payment_date)
                 sheet.update_cell(row_index, liquidation_status_col, "To be liquidated")
 
                 return True
+        st.error("TRX ID not found in the database.")
         return False
     except Exception as e:
         st.error(f"Error issuing payment: {e}")
@@ -86,31 +63,83 @@ def issue_payment(trx_id):
 
 # Render Payment Page
 def render_payment_page():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Payment Processing</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>💵 Payment Processing</h2>", unsafe_allow_html=True)
     st.write("View and process pending payments.")
 
+    # Session state to track issued payments
+    if "issued_payment" not in st.session_state:
+        st.session_state["issued_payment"] = None
+
     try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+
+        # Fetch pending payments
         pending_payments = fetch_pending_payments()
 
         if pending_payments.empty:
             st.info("No pending payments to process.")
             return
 
-        for index, payment in pending_payments.iterrows():
-            with st.expander(f"Request ID: {payment['TRX ID']} - {payment['Project Name']}"):
-                st.write(f"**Budget Line:** {payment['Budget Line']}")
-                st.write(f"**Purpose:** {payment['Purpose']}")
-                st.write(f"**Amount to be Paid:** {int(payment['Requested Amount']):,} IQD")
-                st.write(f"**Approval Date:** {payment['Approval Date']}")
+        st.markdown("<div class='sub-text'>Review the following pending payments:</div>", unsafe_allow_html=True)
 
-                if st.button(f"Issue Payment for {payment['TRX ID']}", key=f"issue_{payment['TRX ID']}"):
-                    issue_payment(payment["TRX ID"])
-                    st.success(f"Payment for {payment['TRX ID']} issued successfully.")
-                    st.session_state["refresh_page"] = True
+        # Apply CSS for better styling
+        st.markdown("""
+            <style>
+                .card {
+                    background-color: #f9f9f9;
+                    padding: 15px;
+                    border-radius: 10px;
+                    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+                    margin-bottom: 15px;
+                }
+                .card-header {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #1E3A8A;
+                }
+                .card-body {
+                    font-size: 16px;
+                    color: #333;
+                }
+                .btn-approve {
+                    background-color: #28a745;
+                    color: white;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                .btn-approve:hover {
+                    background-color: #218838;
+                }
+            </style>
+        """, unsafe_allow_html=True)
 
-                if st.session_state.get("refresh_page", False):
-                    st.session_state["refresh_page"] = False
-                    st.rerun()
+        # Loop through each pending payment and display in card format
+        for _, request in pending_payments.iterrows():
+            with st.container():
+                st.markdown("<div class='card'>", unsafe_allow_html=True)
+                st.markdown(f"<div class='card-header'>Request ID: {request['TRX ID']} - {request['Project name']}</div>", unsafe_allow_html=True)
+                st.markdown("<div class='card-body'>", unsafe_allow_html=True)
+                st.write(f"**Budget Line:** {request['Budget line']}")
+                st.write(f"**Purpose:** {request['Purpose']}")
+                st.write(f"**Requested Amount:** {int(request['Requested Amount']):,} IQD")
+                st.write(f"**Submission Date:** {request['Request submission date']}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                # Approve Button
+                if st.button(f"Issue Payment for {request['TRX ID']}", key=f"pay_{request['TRX ID']}"):
+                    if issue_payment(sheet, request["TRX ID"]):
+                        st.success(f"Payment issued for request {request['TRX ID']}.")
+                        st.session_state["issued_payment"] = request["TRX ID"]
+                        st.rerun()
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # Display a message if a payment was recently issued
+        if st.session_state["issued_payment"]:
+            st.info(f"Recently issued payment for TRX ID: {st.session_state['issued_payment']}")
 
     except Exception as e:
         st.error(f"Error loading payment page: {e}")
