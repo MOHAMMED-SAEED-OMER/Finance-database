@@ -39,11 +39,12 @@ def render_finance_dashboard():
         st.warning("No financial data available.")
         return
 
-    # Calculate financial metrics
-    total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
-    total_expense = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
-    issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
-    available_funds = df["Liquidated amount"].sum() - issued_funds
+   # Calculate financial metrics
+total_income = df[df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
+total_expense = df[df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
+issued_funds = df[df["Liquidation status"].str.lower() == "to be liquidated"]["Requested Amount"].sum()
+available_funds = df["Liquidated amount"].sum() + issued_funds  # Fix applied here
+
 
     # Prepare data for graphs with reduced complexity
     df["Liquidation date"] = pd.to_datetime(df["Liquidation date"], errors='coerce')
