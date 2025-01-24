@@ -16,7 +16,7 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch all pending payments
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=0)
 def fetch_pending_payments():
     try:
         client = load_credentials()
@@ -118,13 +118,9 @@ def render_payment_page():
                 # Approve Button
                 if st.button(f"Issue Payment for {request['TRX ID']}", key=f"pay_{request['TRX ID']}"):
                     if issue_payment(sheet, request["TRX ID"]):
-                        st.success(f"Payment issued for request {request['TRX ID']}.")
                         st.session_state["issued_payment"] = request["TRX ID"]
-                        st.rerun()
-
-        # Display a message if a payment was recently issued
-        if "issued_payment" in st.session_state and st.session_state["issued_payment"]:
-            st.info(f"Recently issued payment for TRX ID: {st.session_state['issued_payment']}")
+                        st.success(f"Payment issued for request {request['TRX ID']}.")
+                        st.experimental_rerun()
 
     except Exception as e:
         st.error(f"Error loading payment page: {e}")
