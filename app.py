@@ -149,10 +149,6 @@ else:
             render_add_data()
         else:
             st.warning("You do not have permission to access this page.")
-elif page == "Finance Dashboard":
-    st.markdown("<div class='page-title'>Finance Dashboard</div>", unsafe_allow_html=True)
-    from finance_dashboard import render_finance_dashboard
-    render_finance_dashboard()
 
     elif page == "User Profiles":
         st.markdown("<div class='page-title'>User Profiles</div>", unsafe_allow_html=True)
@@ -161,3 +157,7 @@ elif page == "Finance Dashboard":
             render_user_profiles()
         else:
             st.warning("You do not have permission to access this page.")
+elif page == "Finance Dashboard":
+    st.markdown("<div class='page-title'>Finance Dashboard</div>", unsafe_allow_html=True)
+    from finance_dashboard import render_finance_dashboard
+    render_finance_dashboard()
