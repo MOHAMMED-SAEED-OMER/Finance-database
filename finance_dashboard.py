@@ -59,22 +59,22 @@ def render_add_data():
 
         # User input fields
         trx_type = st.selectbox("Select TRX Type:", options=[""] + dropdown_options.get("TRX type", []), help="Select the type of transaction.")
-        trx_category = st.selectbox("Select TRX Category:", options=[""] + dropdown_options.get("TRX category", []), help="Select the category.")
+        trx_category = st.selectbox("Select TRX Category (Optional):", options=[""] + dropdown_options.get("TRX category", []), help="Optional category selection.")
         project_name = st.text_input("Enter Project Name (Optional):", help="Optional field for the project name.")
         budget_line = st.text_input("Enter Budget Line (Optional):", help="Optional field for the budget line.")
-        purpose = st.text_area("Enter Purpose:", help="Explain the purpose of the transaction.")
-        detail = st.text_area("Enter Detail:", help="Provide transaction details.")
+        purpose = st.text_area("Enter Purpose *:", help="Explain the purpose of the transaction.")
+        detail = st.text_area("Enter Detail *:", help="Provide transaction details.")
         payment_method = st.selectbox("Select Payment Method:", options=[""] + dropdown_options.get("Payment method", []), help="Select payment method.")
-        liquidated_amount = st.number_input("Enter Liquidated Amount (IQD):", value=0, help="Enter the amount to be liquidated.")
+        liquidated_amount = st.number_input("Enter Liquidated Amount (IQD) *:", value=0, help="Enter the amount to be liquidated.")
         liquidated_invoices = st.text_input("Enter Invoice Links (Optional):", help="Provide invoice links if available.")
-        supplier_donor = st.text_input("Enter Supplier/Donor Name:", help="Provide the supplier or donor name.")
-        contribution = st.text_input("Enter Contribution:", help="Enter any contributions received.")
+        supplier_donor = st.text_input("Enter Supplier/Donor Name *:", help="Provide the supplier or donor name.")
+        contribution = st.text_input("Enter Contribution *:", help="Enter any contributions received.")
         remarks = st.text_area("Additional Remarks (Optional):", help="Add any remarks if necessary.")
 
         # Form submission
         if st.button("Submit Data"):
-            if not trx_type or not trx_category or not purpose or not detail or not payment_method or not supplier_donor or not contribution:
-                st.warning("Please fill in all required fields.")
+            if not trx_type or not purpose or not detail or not payment_method or not supplier_donor or not contribution:
+                st.warning("Please fill in all required fields marked with *.")
                 return
 
             # Auto-generated and default values
@@ -95,7 +95,7 @@ def render_add_data():
             data_to_add = [
                 trx_id,  # Automatically generated TRX ID
                 trx_type,
-                trx_category,
+                trx_category if trx_category else "",  # Optional TRX category
                 request_direct,  # Auto-filled value
                 "",  # Requester name (blank)
                 project_name if project_name else "",  # Optional project name
