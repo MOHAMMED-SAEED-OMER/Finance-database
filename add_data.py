@@ -45,13 +45,13 @@ def render_add_data():
         # Form layout
         with st.form("data_entry_form"):
             trx_type = st.selectbox("Transaction Type:", options=[""] + dropdown_options.get("TRX type", []), help="Select the transaction type.")
-            trx_category = st.selectbox("Transaction Category:", options=[""] + dropdown_options.get("Transaction category", []), help="Select the transaction category.")
-            project_name = st.selectbox("Project Name (Optional):", options=[""] + dropdown_options.get("Project name", []), help="Select the project name if applicable.")
+            trx_category = st.selectbox("Transaction Category:", options=[""] + dropdown_options.get("TRX category", []), help="Select the transaction category.")
+            project_name = st.selectbox("Project Name (Optional):", options=[""] + dropdown_options.get("Project name", []), help="Select the project name.")
             budget_line = st.text_input("Budget Line:", help="Enter the budget line item.")
             purpose = st.text_area("Purpose:", help="Explain the purpose of the transaction.")
             detail = st.text_area("Details:", help="Provide additional details about the transaction.")
             payment_method = st.selectbox("Payment Method:", options=[""] + dropdown_options.get("Payment method", []), help="Select the payment method.")
-            liquidated_amount = st.number_input("Liquidated Amount (IQD):", value=0, help="Enter the liquidated amount. Expenses will be negative automatically.")
+            liquidated_amount = st.number_input("Liquidated Amount (IQD):", value=0, help="Enter the liquidated amount in IQD.")
             supplier_donor = st.text_input("Supplier/Donor:", help="Enter the supplier or donor name.")
             contribution = st.text_input("Contribution:", help="Enter any contribution details.")
             liquidated_invoices = st.text_input("Liquidated Invoices (Optional):", help="Provide invoice links if available.")
@@ -62,15 +62,15 @@ def render_add_data():
 
             if submit_button:
                 # Check required fields
-                if not trx_type or not trx_category or not budget_line or not purpose or not detail or not payment_method or not liquidated_amount or not supplier_donor or not contribution:
+                if not trx_type or not trx_category or not budget_line or not purpose or not detail or not payment_method or not supplier_donor or not contribution:
                     st.warning("Please fill in all required fields.")
                 else:
-                    # Adjust liquidated amount based on transaction type
+                    # Modify liquidated amount based on TRX type
                     if trx_type.lower() == "expense":
-                        liquidated_amount = -abs(liquidated_amount)  # Make it negative
+                        liquidated_amount = -abs(liquidated_amount)  # Ensure negative value
                     elif trx_type.lower() == "income":
                         liquidated_amount = abs(liquidated_amount)  # Ensure positive value
-                    # If it's a transfer, leave it as entered by the user
+                    # If transfer, allow any input (no modification needed)
 
                     # Prepare the final row for Google Sheet
                     data_to_add = [
@@ -91,7 +91,7 @@ def render_add_data():
                         datetime.today().strftime("%Y-%m-%d"),  # Auto-filled payment date
                         payment_method,
                         "Liquidated",  # Auto-filled value
-                        liquidated_amount,
+                        liquidated_amount,  # Final adjusted liquidated amount
                         datetime.today().strftime("%Y-%m-%d"),  # Auto-filled liquidation date
                         liquidated_invoices,  # Optional field
                         "",  # Returned amount (blank)
