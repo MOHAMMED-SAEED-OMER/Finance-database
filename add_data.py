@@ -14,17 +14,17 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch dropdown options from Helper tab (vertical structure with categories as columns)
+# Fetch dropdown options from Helper tab
 @st.cache_data(ttl=60)
 def fetch_dropdown_options_vertical():
     try:
         client = load_credentials()
         helper_sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Helper")
-        helper_data = helper_sheet.get_all_records()  # Read all rows as dictionaries
-        
+        helper_data = helper_sheet.get_all_records()
+
         dropdown_options = {}
         for key in helper_data[0].keys():  # Iterate over column headers
-            dropdown_options[key] = [row[key] for row in helper_data if row[key]]  # Collect non-empty values
+            dropdown_options[key] = [row[key] for row in helper_data if row[key]]
         return dropdown_options
     except Exception as e:
         st.error(f"Error fetching dropdown options: {e}")
@@ -32,8 +32,8 @@ def fetch_dropdown_options_vertical():
 
 # Render the Add New Data Page
 def render_add_data():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 Add New Data</h2>", unsafe_allow_html=True)
-    st.write("Use this page to add new data to the database dynamically.")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 Add New Transaction</h2>", unsafe_allow_html=True)
+    st.write("Fill out the form below to add a new transaction directly to the database.")
 
     try:
         # Authenticate and open the Google Sheet
@@ -43,13 +43,42 @@ def render_add_data():
         # Fetch dropdown options
         dropdown_options = fetch_dropdown_options_vertical()
 
-        # Fetch headers dynamically
-        headers = sheet.row_values(1)  # Fetch the first row as headers
+        # Define column headers
+        headers = [
+            "TRX ID", "TRX type", "TRX category", "Request/Direct", "Requester name", 
+            "Project name", "Budget line", "Purpose", "Detail", "Requested Amount",
+            "Request submission date", "Approval Status", "Approval date", "Payment status", 
+            "Payment date", "Payment method", "Liquidation status", "Liquidated amount", 
+            "Liquidation date", "Liquidated invoices", "Returned amount", "Related request ID", 
+            "Supplier/Donor", "Contribution", "Remarks"
+        ]
+
+        # Generate TRX ID automatically
+        all_rows = sheet.get_all_records()
+        next_trx_id = f"TRX-{len(all_rows) + 1:04d}"
+
+        # Define automatic fields
+        default_values = {
+            "TRX ID": next_trx_id,
+            "Request/Direct": "Direct payment",
+            "Requester name": "",
+            "Requested Amount": "",
+            "Request submission date": "",
+            "Approval Status": "",
+            "Approval date": "",
+            "Payment status": "Issued",
+            "Payment date": datetime.today().strftime("%Y-%m-%d"),
+            "Liquidation status": "Liquidated",
+            "Liquidated amount": "",
+            "Liquidation date": datetime.today().strftime("%Y-%m-%d"),
+            "Returned amount": "",
+            "Related request ID": "",
+        }
 
         # Custom CSS for better styling
         st.markdown("""
             <style>
-                .stTextInput, .stSelectbox, .stDateInput {
+                .stTextInput, .stSelectbox, .stDateInput, .stNumberInput {
                     border-radius: 10px;
                     border: 2px solid #1E3A8A;
                     padding: 10px;
@@ -71,13 +100,21 @@ def render_add_data():
         # Create form to prevent multiple submissions
         with st.form("data_entry_form"):
             data_to_add = []
+
             for header in headers:
-                if header in dropdown_options:
+                if header in default_values:
+                    value = default_values[header]
+                    st.text_input(f"{header} (Auto)", value, disabled=True)
+                elif header in dropdown_options:
                     value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options[header])
-                elif header.lower() == "date":
-                    value = st.date_input(f"Enter {header}:", value=datetime.today())
+                elif header.lower() in ["budget line", "purpose", "detail", "supplier/donor", "contribution", "remarks"]:
+                    value = st.text_input(f"Enter {header}:")
+                elif header.lower() == "payment method":
+                    value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options["Payment method"])
+                elif header.lower() in ["requested amount", "liquidated amount"]:
+                    value = st.number_input(f"Enter {header}:", min_value=0, step=1000)
                 else:
-                    value = st.text_input(f"Enter {header}:", placeholder=f"Type {header} here...")
+                    value = ""
                 data_to_add.append(value)
 
             # Submit button to add data
