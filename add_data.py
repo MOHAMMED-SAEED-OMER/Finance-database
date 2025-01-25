@@ -15,7 +15,7 @@ def load_credentials():
     return gspread.authorize(credentials)
 
 # Fetch dropdown options from Helper tab (vertical structure with categories as columns)
-@st.cache_data(ttl=60)  # Cache for 60 seconds
+@st.cache_data(ttl=60)
 def fetch_dropdown_options_vertical():
     try:
         client = load_credentials()
@@ -32,6 +32,7 @@ def fetch_dropdown_options_vertical():
 
 # Render the Add New Data Page
 def render_add_data():
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 Add New Data</h2>", unsafe_allow_html=True)
     st.write("Use this page to add new data to the database dynamically.")
 
     try:
@@ -45,24 +46,54 @@ def render_add_data():
         # Fetch headers dynamically
         headers = sheet.row_values(1)  # Fetch the first row as headers
 
-        # Input fields for each header
-        data_to_add = []
-        for header in headers:
-            if header in dropdown_options:
-                value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options[header])
-            elif header.lower() == "date":
-                value = st.date_input(f"Enter {header}:", value=datetime.today())
-            else:
-                value = st.text_input(f"Enter {header}:")
-            data_to_add.append(value)
+        # Custom CSS for better styling
+        st.markdown("""
+            <style>
+                .stTextInput, .stSelectbox, .stDateInput {
+                    border-radius: 10px;
+                    border: 2px solid #1E3A8A;
+                    padding: 10px;
+                }
+                .submit-btn {
+                    background-color: #1E3A8A;
+                    color: white;
+                    font-size: 18px;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 5px;
+                }
+                .submit-btn:hover {
+                    background-color: #3B82F6;
+                }
+            </style>
+        """, unsafe_allow_html=True)
 
-        # Submit button to add data
-        if st.button("Submit Data"):
-            if any(data_to_add):  # Ensure at least one field is filled
-                sheet.append_row(data_to_add)  # Append data to Google Sheet
-                st.success("Data added successfully!")
-            else:
-                st.warning("Please fill at least one field.")
+        # Create form to prevent multiple submissions
+        with st.form("data_entry_form"):
+            data_to_add = []
+            for header in headers:
+                if header in dropdown_options:
+                    value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options[header])
+                elif header.lower() == "date":
+                    value = st.date_input(f"Enter {header}:", value=datetime.today())
+                else:
+                    value = st.text_input(f"Enter {header}:", placeholder=f"Type {header} here...")
+                data_to_add.append(value)
+
+            # Submit button to add data
+            submit_button = st.form_submit_button("Submit Data", use_container_width=True)
+
+            if submit_button:
+                if any(data_to_add):  # Ensure at least one field is filled
+                    sheet.append_row(data_to_add)  # Append data to Google Sheet
+                    st.success("✅ Data added successfully!")
+                    st.write("**Submitted Data:**")
+                    st.write(dict(zip(headers, data_to_add)))
+                else:
+                    st.warning("⚠️ Please fill at least one field.")
 
     except Exception as e:
         st.error(f"Error adding data to Google Sheets: {e}")
+
+if __name__ == "__main__":
+    render_add_data()
