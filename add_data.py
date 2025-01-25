@@ -2,6 +2,7 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import pandas as pd
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -13,8 +14,8 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch dropdown options from Helper tab
-@st.cache_data(ttl=60)
+# Fetch dropdown options from Helper tab (vertical structure with categories as columns)
+@st.cache_data(ttl=60)  # Cache for 60 seconds
 def fetch_dropdown_options_vertical():
     try:
         client = load_credentials()
@@ -31,104 +32,71 @@ def fetch_dropdown_options_vertical():
 
 # Render the Add New Data Page
 def render_add_data():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 Add New Transaction</h2>", unsafe_allow_html=True)
-    st.write("Fill out the form below to add a new transaction directly to the database.")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Add New Data</h2>", unsafe_allow_html=True)
+    st.write("Use this page to add new financial records to the database dynamically.")
 
     try:
-        # Authenticate and open the Google Sheet
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
         # Fetch dropdown options
         dropdown_options = fetch_dropdown_options_vertical()
 
-        # Define necessary headers for required fields
-        headers = [
-            "TRX type", "TRX category", "Project name", "Budget line", "Purpose", 
-            "Detail", "Payment method", "Liquidated amount", "Supplier/Donor", "Contribution"
-        ]
-
-        # Auto-filled values
-        auto_values = {
-            "Request/Direct": "Direct payment",
-            "Payment status": "Issued",
-            "Payment date": datetime.today().strftime("%Y-%m-%d"),
-            "Liquidation status": "Liquidated",
-            "Liquidation date": datetime.today().strftime("%Y-%m-%d"),
-            "Requester name": "",
-            "Requested Amount": "",
-            "Request submission date": "",
-            "Approval Status": "",
-            "Approval date": "",
-            "Returned amount": "",
-            "Related request ID": "",
-        }
-
-        # Custom CSS for better styling
-        st.markdown("""
-            <style>
-                .stTextInput, .stSelectbox, .stDateInput, .stNumberInput {
-                    border-radius: 10px;
-                    border: 2px solid #1E3A8A;
-                    padding: 10px;
-                }
-                .submit-btn {
-                    background-color: #1E3A8A;
-                    color: white;
-                    font-size: 18px;
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 5px;
-                }
-                .submit-btn:hover {
-                    background-color: #3B82F6;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # Create form to prevent multiple submissions
+        # Form layout
         with st.form("data_entry_form"):
-            data_to_add = []
-
-            # Required fields
-            trx_type = st.selectbox("Select TRX Type:", options=[""] + dropdown_options.get("TRX type", []))
-            trx_category = st.selectbox("Select TRX Category:", options=[""] + dropdown_options.get("TRX category", []))
-            project_name = st.selectbox("Select Project Name:", options=[""] + dropdown_options.get("Project name", []))
-            budget_line = st.text_input("Enter Budget Line:")
-            purpose = st.text_input("Enter Purpose:")
-            detail = st.text_area("Enter Detail:")
-            payment_method = st.selectbox("Select Payment Method:", options=[""] + dropdown_options.get("Payment method", []))
-            liquidated_amount = st.number_input("Enter Liquidated Amount:", min_value=0, step=1000)
-            supplier_donor = st.text_input("Enter Supplier/Donor:")
-            contribution = st.text_input("Enter Contribution:")
-
-            # Optional fields
-            liquidated_invoices = st.text_input("Enter Liquidated Invoices (Optional):", placeholder="Add invoice links if applicable")
-            remarks = st.text_area("Additional Remarks (Optional):", placeholder="Any additional comments")
-
-            # Prepare the final row for Google Sheet
-            data_to_add = [
-                "", trx_type, trx_category, auto_values["Request/Direct"], auto_values["Requester name"],
-                project_name, budget_line, purpose, detail, auto_values["Requested Amount"],
-                auto_values["Request submission date"], auto_values["Approval Status"], auto_values["Approval date"],
-                auto_values["Payment status"], auto_values["Payment date"], payment_method,
-                auto_values["Liquidation status"], liquidated_amount, auto_values["Liquidation date"],
-                liquidated_invoices, auto_values["Returned amount"], auto_values["Related request ID"],
-                supplier_donor, contribution, remarks
-            ]
+            trx_type = st.selectbox("Transaction Type:", options=[""] + dropdown_options.get("TRX type", []), help="Select the transaction type.")
+            trx_category = st.selectbox("Transaction Category:", options=[""] + dropdown_options.get("TRX category", []), help="Select the transaction category.")
+            project_name = st.selectbox("Project Name:", options=[""] + dropdown_options.get("Project name", []), help="Select the project name.")
+            budget_line = st.text_input("Budget Line:", help="Enter the budget line item.")
+            purpose = st.text_area("Purpose:", help="Explain the purpose of the transaction.")
+            detail = st.text_area("Details:", help="Provide additional details about the transaction.")
+            payment_method = st.selectbox("Payment Method:", options=[""] + dropdown_options.get("Payment method", []), help="Select the payment method.")
+            liquidated_amount = st.number_input("Liquidated Amount (IQD):", min_value=0, help="Enter the liquidated amount in IQD.")
+            supplier_donor = st.text_input("Supplier/Donor:", help="Enter the supplier or donor name.")
+            contribution = st.text_input("Contribution:", help="Enter any contribution details.")
+            liquidated_invoices = st.text_input("Liquidated Invoices (Optional):", help="Provide invoice links if available.")
+            remarks = st.text_area("Remarks (Optional):", help="Any additional remarks.")
 
             # Submit button to add data
-            submit_button = st.form_submit_button("Submit Data", use_container_width=True)
+            submit_button = st.form_submit_button("Submit Data")
 
-            # Validate form before submission
             if submit_button:
-                if not all([trx_type, trx_category, project_name, budget_line, purpose, detail, payment_method, liquidated_amount, supplier_donor, contribution]):
-                    st.warning("⚠️ Please fill in all required fields.")
+                # Check required fields
+                if not trx_type or not trx_category or not project_name or not budget_line or not purpose or not detail or not payment_method or not liquidated_amount or not supplier_donor or not contribution:
+                    st.warning("Please fill in all required fields.")
                 else:
-                    sheet.append_row(data_to_add)  # Append data to Google Sheet
-                    st.success("✅ Data added successfully!")
-                    st.write("**Submitted Data:**")
-                    st.write(dict(zip(headers + ["Liquidated invoices", "Remarks"], data_to_add)))
+                    # Prepare the final row for Google Sheet
+                    data_to_add = [
+                        "",  # TRX ID (auto)
+                        trx_type,
+                        trx_category,
+                        "Direct payment",  # Auto-filled value
+                        "",  # Requester name (blank)
+                        project_name,
+                        budget_line,
+                        purpose,
+                        detail,
+                        "",  # Requested Amount (blank)
+                        "",  # Request submission date (blank)
+                        "",  # Approval status (blank)
+                        "",  # Approval date (blank)
+                        "Issued",  # Auto-filled value
+                        datetime.today().strftime("%Y-%m-%d"),  # Auto-filled payment date
+                        payment_method,
+                        "Liquidated",  # Auto-filled value
+                        liquidated_amount,
+                        datetime.today().strftime("%Y-%m-%d"),  # Auto-filled liquidation date
+                        liquidated_invoices,  # Optional field
+                        "",  # Returned amount (blank)
+                        "",  # Related request ID (blank)
+                        supplier_donor,
+                        contribution,
+                        remarks
+                    ]
+
+                    # Append data to Google Sheet
+                    sheet.append_row(data_to_add)
+                    st.success("Data added successfully!")
 
     except Exception as e:
         st.error(f"Error adding data to Google Sheets: {e}")
