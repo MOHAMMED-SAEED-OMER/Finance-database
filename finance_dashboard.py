@@ -109,18 +109,24 @@ funds_distribution = funds_distribution.merge(
 
 # Calculate the remaining funds after considering issued amounts
 funds_distribution["Remaining Amount"] = (
-    funds_distribution["Liquidated amount"] - funds_distribution["Requested Amount"]
+    funds_distribution["Liquidated amount"] - abs(funds_distribution["Requested Amount"])
 )
+
+# Filter out zero or negative remaining funds
+funds_distribution = funds_distribution[funds_distribution["Remaining Amount"] > 0]
 
 # Prepare pie chart data using the adjusted remaining amounts
 available_funds_chart = px.pie(
     funds_distribution,
     names="Payment method",
     values="Remaining Amount",
-    title="Available Funds Distribution",
+    title="Available Funds Distribution (After Issued Deductions)",
     hole=0.4,  # Make it a donut chart
     color_discrete_sequence=["#1E3A8A", "#D32F2F", "#F59E0B"],
 )
+
+# Display debug output (optional)
+st.write("Funds Distribution Data:", funds_distribution)
 
 # Display the chart
 st.plotly_chart(available_funds_chart, use_container_width=True)
