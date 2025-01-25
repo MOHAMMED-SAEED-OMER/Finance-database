@@ -158,30 +158,30 @@ def render_finance_dashboard():
         </style>
     """, unsafe_allow_html=True)
 
-    # Layout with columns for the finance overview
-    col1, col2 = st.columns(2)
+   # Layout with columns for the finance overview
+col1, col2 = st.columns(2)
 
-    with col1:
-        st.markdown("<div class='finance-header'>Total Income</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='finance-box'>{total_income:,.0f} IQD</div>", unsafe_allow_html=True)
-        st.plotly_chart(income_chart, use_container_width=True)
+with col1:
+    st.markdown("<div class='finance-header'>Total Income</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='finance-box'>{total_income:,.0f} IQD</div>", unsafe_allow_html=True)
+    st.plotly_chart(income_chart, use_container_width=True, key="income_chart")
 
-    with col2:
-        st.markdown("<div class='finance-header'>Total Expense</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='finance-box'>({abs(total_expense):,.0f}) IQD</div>", unsafe_allow_html=True)
-        st.plotly_chart(expense_chart, use_container_width=True)
+with col2:
+    st.markdown("<div class='finance-header'>Total Expense</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='finance-box'>({abs(total_expense):,.0f}) IQD</div>", unsafe_allow_html=True)
+    st.plotly_chart(expense_chart, use_container_width=True, key="expense_chart")
 
-    col3, col4 = st.columns(2)
+col3, col4 = st.columns(2)
 
-    with col3:
-        st.markdown("<div class='finance-header'>Issued Funds</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='finance-box'>({abs(issued_funds):,.0f}) IQD</div>", unsafe_allow_html=True)
-        st.plotly_chart(issued_chart, use_container_width=True)
+with col3:
+    st.markdown("<div class='finance-header'>Issued Funds</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='finance-box'>({abs(issued_funds):,.0f}) IQD</div>", unsafe_allow_html=True)
+    st.plotly_chart(issued_chart, use_container_width=True, key="issued_chart")
 
-    with col4:
-        st.markdown("<div class='finance-header'>Available Funds</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='finance-box'>{available_funds:,.0f} IQD</div>", unsafe_allow_html=True)
-        st.plotly_chart(available_funds_chart, use_container_width=True)
+with col4:
+    st.markdown("<div class='finance-header'>Available Funds</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='finance-box'>{available_funds:,.0f} IQD</div>", unsafe_allow_html=True)
+    st.plotly_chart(available_funds_chart, use_container_width=True, key="available_funds_chart")
 
 if __name__ == "__main__":
     render_finance_dashboard()
