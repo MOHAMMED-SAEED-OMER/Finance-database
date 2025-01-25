@@ -2,7 +2,6 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 from datetime import datetime
-import pandas as pd
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -23,7 +22,7 @@ def fetch_dropdown_options_vertical():
         helper_data = helper_sheet.get_all_records()
 
         dropdown_options = {}
-        for key in helper_data[0].keys():  # Iterate over column headers
+        for key in helper_data[0].keys():
             dropdown_options[key] = [row[key] for row in helper_data if row[key]]
         return dropdown_options
     except Exception as e:
@@ -43,34 +42,24 @@ def render_add_data():
         # Fetch dropdown options
         dropdown_options = fetch_dropdown_options_vertical()
 
-        # Define column headers
+        # Define necessary headers for required fields
         headers = [
-            "TRX ID", "TRX type", "TRX category", "Request/Direct", "Requester name", 
-            "Project name", "Budget line", "Purpose", "Detail", "Requested Amount",
-            "Request submission date", "Approval Status", "Approval date", "Payment status", 
-            "Payment date", "Payment method", "Liquidation status", "Liquidated amount", 
-            "Liquidation date", "Liquidated invoices", "Returned amount", "Related request ID", 
-            "Supplier/Donor", "Contribution", "Remarks"
+            "TRX type", "TRX category", "Project name", "Budget line", "Purpose", 
+            "Detail", "Payment method", "Liquidated amount", "Supplier/Donor", "Contribution"
         ]
 
-        # Generate TRX ID automatically
-        all_rows = sheet.get_all_records()
-        next_trx_id = f"TRX-{len(all_rows) + 1:04d}"
-
-        # Define automatic fields
-        default_values = {
-            "TRX ID": next_trx_id,
+        # Auto-filled values
+        auto_values = {
             "Request/Direct": "Direct payment",
+            "Payment status": "Issued",
+            "Payment date": datetime.today().strftime("%Y-%m-%d"),
+            "Liquidation status": "Liquidated",
+            "Liquidation date": datetime.today().strftime("%Y-%m-%d"),
             "Requester name": "",
             "Requested Amount": "",
             "Request submission date": "",
             "Approval Status": "",
             "Approval date": "",
-            "Payment status": "Issued",
-            "Payment date": datetime.today().strftime("%Y-%m-%d"),
-            "Liquidation status": "Liquidated",
-            "Liquidated amount": "",
-            "Liquidation date": datetime.today().strftime("%Y-%m-%d"),
             "Returned amount": "",
             "Related request ID": "",
         }
@@ -101,33 +90,45 @@ def render_add_data():
         with st.form("data_entry_form"):
             data_to_add = []
 
-            for header in headers:
-                if header in default_values:
-                    value = default_values[header]
-                    st.text_input(f"{header} (Auto)", value, disabled=True)
-                elif header in dropdown_options:
-                    value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options[header])
-                elif header.lower() in ["budget line", "purpose", "detail", "supplier/donor", "contribution", "remarks"]:
-                    value = st.text_input(f"Enter {header}:")
-                elif header.lower() == "payment method":
-                    value = st.selectbox(f"Select {header}:", options=[""] + dropdown_options["Payment method"])
-                elif header.lower() in ["requested amount", "liquidated amount"]:
-                    value = st.number_input(f"Enter {header}:", min_value=0, step=1000)
-                else:
-                    value = ""
-                data_to_add.append(value)
+            # Required fields
+            trx_type = st.selectbox("Select TRX Type:", options=[""] + dropdown_options.get("TRX type", []))
+            trx_category = st.selectbox("Select TRX Category:", options=[""] + dropdown_options.get("TRX category", []))
+            project_name = st.selectbox("Select Project Name:", options=[""] + dropdown_options.get("Project name", []))
+            budget_line = st.text_input("Enter Budget Line:")
+            purpose = st.text_input("Enter Purpose:")
+            detail = st.text_area("Enter Detail:")
+            payment_method = st.selectbox("Select Payment Method:", options=[""] + dropdown_options.get("Payment method", []))
+            liquidated_amount = st.number_input("Enter Liquidated Amount:", min_value=0, step=1000)
+            supplier_donor = st.text_input("Enter Supplier/Donor:")
+            contribution = st.text_input("Enter Contribution:")
+
+            # Optional fields
+            liquidated_invoices = st.text_input("Enter Liquidated Invoices (Optional):", placeholder="Add invoice links if applicable")
+            remarks = st.text_area("Additional Remarks (Optional):", placeholder="Any additional comments")
+
+            # Prepare the final row for Google Sheet
+            data_to_add = [
+                "", trx_type, trx_category, auto_values["Request/Direct"], auto_values["Requester name"],
+                project_name, budget_line, purpose, detail, auto_values["Requested Amount"],
+                auto_values["Request submission date"], auto_values["Approval Status"], auto_values["Approval date"],
+                auto_values["Payment status"], auto_values["Payment date"], payment_method,
+                auto_values["Liquidation status"], liquidated_amount, auto_values["Liquidation date"],
+                liquidated_invoices, auto_values["Returned amount"], auto_values["Related request ID"],
+                supplier_donor, contribution, remarks
+            ]
 
             # Submit button to add data
             submit_button = st.form_submit_button("Submit Data", use_container_width=True)
 
+            # Validate form before submission
             if submit_button:
-                if any(data_to_add):  # Ensure at least one field is filled
+                if not all([trx_type, trx_category, project_name, budget_line, purpose, detail, payment_method, liquidated_amount, supplier_donor, contribution]):
+                    st.warning("⚠️ Please fill in all required fields.")
+                else:
                     sheet.append_row(data_to_add)  # Append data to Google Sheet
                     st.success("✅ Data added successfully!")
                     st.write("**Submitted Data:**")
-                    st.write(dict(zip(headers, data_to_add)))
-                else:
-                    st.warning("⚠️ Please fill at least one field.")
+                    st.write(dict(zip(headers + ["Liquidated invoices", "Remarks"], data_to_add)))
 
     except Exception as e:
         st.error(f"Error adding data to Google Sheets: {e}")
