@@ -14,14 +14,14 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch dropdown options from Helper tab (vertical structure with categories as columns)
-@st.cache_data(ttl=60)  # Cache for 60 seconds
+# Fetch dropdown options from Helper tab
+@st.cache_data(ttl=60)
 def fetch_dropdown_options_vertical():
     try:
         client = load_credentials()
         helper_sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Helper")
         helper_data = helper_sheet.get_all_records()
-
+        
         dropdown_options = {}
         for key in helper_data[0].keys():
             dropdown_options[key] = [row[key] for row in helper_data if row[key]]
@@ -90,7 +90,6 @@ def render_add_data():
                 liquidated_amount = -abs(liquidated_amount)  # Ensure negative for expense
             elif trx_type.lower() == "income":
                 liquidated_amount = abs(liquidated_amount)   # Ensure positive for income
-            # If it's a transfer, leave the value as entered
 
             # Prepare the final row for Google Sheet
             data_to_add = [
