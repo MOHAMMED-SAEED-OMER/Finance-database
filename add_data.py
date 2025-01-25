@@ -32,7 +32,6 @@ def fetch_dropdown_options_vertical():
 
 # Render the Add New Data Page
 def render_add_data():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Add New Data</h2>", unsafe_allow_html=True)
     st.write("Use this page to add new financial records to the database dynamically.")
 
     try:
