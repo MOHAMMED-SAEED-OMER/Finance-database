@@ -120,7 +120,7 @@ def render_finance_dashboard():
         funds_distribution,
         names="Payment method",
         values="Remaining Amount",
-        title="Available Funds Distribution (After Issued Deductions)",
+        title="Available Funds Distribution",
         hole=0.4,  # Make it a donut chart
         color_discrete_sequence=["#1E3A8A", "#D32F2F", "#F59E0B"],
     )
