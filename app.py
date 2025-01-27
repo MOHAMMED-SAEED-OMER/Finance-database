@@ -11,9 +11,10 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
+    st.session_state["user_name"] = None
     st.session_state["user_role"] = None
 
-# Apply styling to the app
+# Apply new styling
 apply_styling()
 
 if not st.session_state["logged_in"]:
@@ -23,11 +24,11 @@ else:
     # Render the sidebar and get the selected page
     page = render_sidebar()
 
-    # Display title based on the selected page
+    # Display page title dynamically
     if page:
         display_page_title(page)
 
-    # Load pages based on selected option
+    # Load pages dynamically
     if page == "Requests":
         from submit_request import render_request_form
         render_request_form()
