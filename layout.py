@@ -1,30 +1,31 @@
 import streamlit as st
 
+# Apply new styling
 def apply_styling():
     st.markdown(
         """
         <style>
             [data-testid="stSidebar"] {
-                background-color: #1E3A8A;
+                background-color: #1E293B; /* Darker shade for better visibility */
                 padding: 20px;
                 border-radius: 10px;
                 box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
             }
             .sidebar-text {
-                font-size: 24px;
+                font-size: 26px;
                 font-weight: bold;
-                color: white;
+                color: #E2E8F0; /* Light grayish text */
                 text-align: center;
                 margin-bottom: 20px;
             }
             .sidebar-subtext {
                 font-size: 18px;
-                color: #BBDEFB;
+                color: #94A3B8; /* Subtle text color */
                 text-align: center;
                 margin-bottom: 30px;
             }
             .nav-btn {
-                background-color: #3B82F6;
+                background-color: #475569; /* New dark theme button color */
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -37,7 +38,7 @@ def apply_styling():
                 box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
             }
             .nav-btn:hover {
-                background-color: #2563EB;
+                background-color: #64748B;
                 transform: scale(1.05);
                 transition: 0.2s;
             }
@@ -61,10 +62,28 @@ def apply_styling():
             .page-title {
                 font-size: 2.5rem;
                 font-weight: bold;
-                color: #1E3A8A;
+                color: #334155; /* Dark blue-gray for better visibility */
                 text-align: center;
                 margin-bottom: 20px;
                 text-transform: uppercase;
+            }
+            .profile-section {
+                background-color: #475569;
+                color: #E2E8F0;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                text-align: center;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+            }
+            .profile-header {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .profile-details {
+                font-size: 16px;
+                margin-bottom: 5px;
             }
         </style>
         """,
@@ -77,7 +96,21 @@ def render_sidebar():
 
         # Fetch user details
         user_name = st.session_state.get('user_name', 'Guest')
-        st.markdown(f"<div class='sidebar-subtext'>Welcome, {user_name}</div>", unsafe_allow_html=True)
+        user_email = st.session_state.get('user_email', 'Not Provided')
+        user_role = st.session_state.get('user_role', 'Unknown')
+
+        # User profile section
+        st.markdown(
+            f"""
+            <div class='profile-section'>
+                <div class='profile-header'>User Profile</div>
+                <div class='profile-details'><strong>Name:</strong> {user_name}</div>
+                <div class='profile-details'><strong>Email:</strong> {user_email}</div>
+                <div class='profile-details'><strong>Role:</strong> {user_role}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         # Role-based navigation
         role = st.session_state.get("user_role", "Guest")
@@ -106,7 +139,9 @@ def render_sidebar():
         return st.session_state.get("selected_page", pages[0] if pages else None)
 
 def display_page_title(page):
-    st.markdown(f"<div class='page-title'>{page}</div>", unsafe_allow_html=True)
+    if page != st.session_state.get("last_page"):
+        st.markdown(f"<div class='page-title'>{page}</div>", unsafe_allow_html=True)
+        st.session_state["last_page"] = page
 
 # Logout function
 def logout():
