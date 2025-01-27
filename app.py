@@ -14,14 +14,13 @@ if "logged_in" not in st.session_state:
     st.session_state["user_name"] = None  
     st.session_state["user_role"] = None
 
-# Apply new styling
+# Apply the new design
 apply_styling()
 
 if not st.session_state["logged_in"]:
     from login import render_login
     render_login()
 else:
-    # Render sidebar and get selected page
     page = render_sidebar()
 
     # Load selected page dynamically
