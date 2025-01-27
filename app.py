@@ -1,5 +1,5 @@
 import streamlit as st
-from layout import apply_styling, render_sidebar
+from layout import apply_styling, render_sidebar, display_page_title
 
 # Set page configuration
 st.set_page_config(
@@ -11,22 +11,35 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
-    st.session_state["user_name"] = None  
+    st.session_state["user_name"] = None  # Added user_name
     st.session_state["user_role"] = None
 
-# Apply the new design
+# Apply new styling
 apply_styling()
 
 if not st.session_state["logged_in"]:
     from login import render_login
     render_login()
 else:
+    # Render the sidebar and get the selected page
     page = render_sidebar()
 
-    # Load selected page dynamically
+    # Display page title dynamically
+    if page:
+        display_page_title(page)
+
+    # Load pages dynamically
     if page == "Requests":
-        from submit_request import render_request_form
-        render_request_form()
+        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
+
+        with tab1:
+            from submit_request import render_request_form
+            render_request_form()
+
+        with tab2:
+            from view_requests import render_user_requests
+            render_user_requests()
 
     elif page == "Approver":
         from approver_page import render_approver_page
