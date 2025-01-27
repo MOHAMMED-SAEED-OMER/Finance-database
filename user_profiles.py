@@ -32,6 +32,23 @@ def fetch_user_data():
         st.error(f"Error fetching user data: {e}")
         return pd.DataFrame()
 
+# Delete a user from the sheet
+def delete_user(email):
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
+        records = sheet.get_all_records()
+
+        for idx, record in enumerate(records, start=2):  # Skip header row
+            if record["Email"] == email:
+                sheet.delete_rows(idx)
+                st.success(f"User with email {email} deleted successfully!")
+                st.experimental_rerun()
+                return
+        st.warning("User not found.")
+    except Exception as e:
+        st.error(f"Error deleting user: {e}")
+
 # Render the User Profiles Page
 def render_user_profiles():
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>User Management</h2>", unsafe_allow_html=True)
@@ -68,18 +85,23 @@ def render_user_profiles():
         role_chart = px.pie(df, names="Role", title="User Role Distribution", hole=0.4)
         st.plotly_chart(role_chart, use_container_width=True)
 
-        # Display user list in card format
+        # Display user list in card format with delete button
         for index, row in df.iterrows():
-            st.markdown(
-                f"""
-                <div class='user-card'>
-                    <strong>Name:</strong> {row['Name']}<br>
-                    <strong>Email:</strong> {row['Email']}<br>
-                    <strong>Role:</strong> {row['Role']}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.markdown(
+                    f"""
+                    <div class='user-card'>
+                        <strong>Name:</strong> {row['Name']}<br>
+                        <strong>Email:</strong> {row['Email']}<br>
+                        <strong>Role:</strong> {row['Role']}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with col2:
+                if st.button(f"Delete {row['Name']}", key=f"delete_{index}"):
+                    delete_user(row["Email"])
 
     # Add New User Tab
     with tab2:
@@ -124,6 +146,16 @@ def render_user_profiles():
                 padding: 20px;
                 margin-bottom: 10px;
                 box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .stButton>button {
+                background-color: #D32F2F;
+                color: white;
+                border-radius: 10px;
+                padding: 8px 16px;
+                border: none;
+            }
+            .stButton>button:hover {
+                background-color: #B71C1C;
             }
         </style>
     """, unsafe_allow_html=True)
