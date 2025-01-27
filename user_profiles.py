@@ -43,7 +43,7 @@ def delete_user(email):
             if record["Email"] == email:
                 sheet.delete_rows(idx)
                 st.success("User deleted successfully!")
-                st.experimental_rerun()
+                st.rerun()  # Updated rerun method
                 return
         st.warning("User not found.")
     except Exception as e:
