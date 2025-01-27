@@ -30,7 +30,6 @@ else:
 
     # Load pages dynamically
     if page == "Requests":
-        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
         tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
 
         with tab1:
