@@ -39,12 +39,14 @@ def delete_user(email):
         sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
         records = sheet.get_all_records()
 
+        # Ensure email case insensitivity and whitespace stripping
         for idx, record in enumerate(records, start=2):  # Skip header row
-            if record["Email"] == email:
+            if record["Email"].strip().lower() == email.strip().lower():
                 sheet.delete_rows(idx)
                 st.success("User deleted successfully!")
-                st.rerun()  # Updated rerun method
+                st.rerun()  # Use the correct rerun function
                 return
+        
         st.warning("User not found.")
     except Exception as e:
         st.error(f"Error deleting user: {e}")
