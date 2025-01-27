@@ -5,8 +5,11 @@ def apply_styling():
     st.markdown(
         """
         <style>
+            body {
+                background-color: #F1F5F9;  /* Light gray background */
+            }
             [data-testid="stSidebar"] {
-                background-color: #1E293B; /* Darker shade for better visibility */
+                background-color: #0F172A;  /* Cool dark blue shade */
                 padding: 20px;
                 border-radius: 10px;
                 box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
@@ -14,18 +17,18 @@ def apply_styling():
             .sidebar-text {
                 font-size: 26px;
                 font-weight: bold;
-                color: #E2E8F0; /* Light grayish text */
+                color: #E2E8F0;  /* Light grayish text */
                 text-align: center;
                 margin-bottom: 20px;
             }
             .sidebar-subtext {
                 font-size: 18px;
-                color: #94A3B8; /* Subtle text color */
+                color: #94A3B8;
                 text-align: center;
                 margin-bottom: 30px;
             }
             .nav-btn {
-                background-color: #475569; /* New dark theme button color */
+                background-color: #334155; /* Dark cool button color */
                 color: white;
                 border: none;
                 border-radius: 8px;
@@ -38,7 +41,7 @@ def apply_styling():
                 box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
             }
             .nav-btn:hover {
-                background-color: #64748B;
+                background-color: #475569;
                 transform: scale(1.05);
                 transition: 0.2s;
             }
@@ -62,13 +65,13 @@ def apply_styling():
             .page-title {
                 font-size: 2.5rem;
                 font-weight: bold;
-                color: #334155; /* Dark blue-gray for better visibility */
+                color: #1E293B; /* Dark blue-gray for better visibility */
                 text-align: center;
                 margin-bottom: 20px;
                 text-transform: uppercase;
             }
             .profile-section {
-                background-color: #475569;
+                background-color: #1E293B;
                 color: #E2E8F0;
                 padding: 20px;
                 border-radius: 10px;
@@ -94,23 +97,11 @@ def render_sidebar():
     with st.sidebar:
         st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
 
-        # Fetch user details
-        user_name = st.session_state.get('user_name', 'Guest')
-        user_email = st.session_state.get('user_email', 'Not Provided')
-        user_role = st.session_state.get('user_role', 'Unknown')
-
-        # User profile section
-        st.markdown(
-            f"""
-            <div class='profile-section'>
-                <div class='profile-header'>User Profile</div>
-                <div class='profile-details'><strong>Name:</strong> {user_name}</div>
-                <div class='profile-details'><strong>Email:</strong> {user_email}</div>
-                <div class='profile-details'><strong>Role:</strong> {user_role}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        # User profile dropdown
+        with st.expander("🔽 User Profile"):
+            st.write(f"**Name:** {st.session_state.get('user_name', 'Guest')}")
+            st.write(f"**Email:** {st.session_state.get('user_email', 'Not Provided')}")
+            st.write(f"**Role:** {st.session_state.get('user_role', 'Unknown')}")
 
         # Role-based navigation
         role = st.session_state.get("user_role", "Guest")
