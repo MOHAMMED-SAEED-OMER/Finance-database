@@ -46,7 +46,6 @@ def generate_trx_id(sheet):
 
 # Render the Add New Data Page
 def render_add_data():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Add New Data</h2>", unsafe_allow_html=True)
     st.write("Use this page to add new data to the database dynamically.")
 
     try:
