@@ -53,7 +53,6 @@ def delete_user(email):
 
 # Render the User Profiles Page
 def render_user_profiles():
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>User Management</h2>", unsafe_allow_html=True)
 
     # Create tabbed interface
     tab1, tab2 = st.tabs(["User Overview", "Add New User"])
