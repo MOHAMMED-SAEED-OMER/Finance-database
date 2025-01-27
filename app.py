@@ -11,7 +11,7 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
-    st.session_state["user_name"] = None
+    st.session_state["user_name"] = None  # Added user_name
     st.session_state["user_role"] = None
 
 # Apply new styling
@@ -30,8 +30,16 @@ else:
 
     # Load pages dynamically
     if page == "Requests":
-        from submit_request import render_request_form
-        render_request_form()
+        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
+
+        with tab1:
+            from submit_request import render_request_form
+            render_request_form()
+
+        with tab2:
+            from view_requests import render_user_requests
+            render_user_requests()
 
     elif page == "Approver":
         from approver_page import render_approver_page
