@@ -1,4 +1,5 @@
 import streamlit as st
+import hashlib
 
 def apply_styling():
     st.markdown(
@@ -58,14 +59,6 @@ def apply_styling():
                 transform: scale(1.05);
                 transition: 0.2s;
             }
-            .page-title {
-                font-size: 2.5rem;
-                font-weight: bold;
-                color: #1E3A8A;
-                text-align: center;
-                margin-bottom: 20px;
-                text-transform: uppercase;
-            }
         </style>
         """,
         unsafe_allow_html=True
@@ -77,20 +70,45 @@ def render_sidebar():
 
         # Fetch user details
         user_name = st.session_state.get('user_name', 'Guest')
-        st.markdown(f"<div class='sidebar-subtext'>Welcome, {user_name}</div>", unsafe_allow_html=True)
+        user_email = st.session_state.get('user_email', 'guest@example.com')
+        user_role = st.session_state.get("user_role", "Guest")
+
+        # Collapsible User Profile Section
+        with st.expander("👤 My Profile"):
+            st.markdown(f"**Name:** {user_name}")
+            st.markdown(f"**Email:** {user_email}")
+            st.markdown(f"**Role:** {user_role}")
+            
+            # Change Password Feature
+            st.subheader("Change Password")
+            new_password = st.text_input("New Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            
+            if st.button("Update Password"):
+                if new_password and confirm_password:
+                    if new_password == confirm_password:
+                        hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
+                        st.success("Password updated successfully!")
+                        # Here you would add logic to update the password in the database
+                    else:
+                        st.error("Passwords do not match.")
+                else:
+                    st.warning("Please enter and confirm your new password.")
+
+            # Logout button
+            if st.button("Log Out", key="logout_btn", use_container_width=True):
+                logout()
 
         # Role-based navigation
-        role = st.session_state.get("user_role", "Guest")
         pages = []
-
-        if role == "Admin":
+        if user_role == "Admin":
             pages = [
                 "Requests", "Approver", "Payment", "Liquidation",
                 "Database", "Finance Dashboard", "Add Data", "User Profiles"
             ]
-        elif role == "Approver":
+        elif user_role == "Approver":
             pages = ["Approver", "Database"]
-        elif role == "Requester":
+        elif user_role == "Requester":
             pages = ["Requests"]
 
         selected_page = st.session_state.get("selected_page", pages[0] if pages else None)
@@ -100,15 +118,8 @@ def render_sidebar():
                 st.session_state["selected_page"] = page
                 st.rerun()
 
-        if st.button("Log Out", key="logout_btn", help="Click to log out", use_container_width=True):
-            logout()
-
         return st.session_state.get("selected_page", pages[0] if pages else None)
 
-def display_page_title(page):
-    st.markdown(f"<div class='page-title'>{page}</div>", unsafe_allow_html=True)
-
-# Logout function
 def logout():
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
