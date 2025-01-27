@@ -3,7 +3,6 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
-import re
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -18,11 +17,6 @@ def load_credentials():
 # Hash a password for security
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
-
-# Validate email format
-def is_valid_email(email):
-    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    return re.match(pattern, email)
 
 # Fetch user data with caching
 @st.cache_data(ttl=300)
@@ -39,11 +33,73 @@ def render_user_profiles():
     try:
         df = fetch_user_data()
 
-        # Display current users with filtering option
-        st.subheader("👥 Current Users")
-        selected_role = st.selectbox("Filter by Role", ["All"] + df["Role"].unique().tolist())
-        filtered_df = df if selected_role == "All" else df[df["Role"] == selected_role]
-        st.data_editor(filtered_df, num_rows="dynamic", height=300)
+        # Calculate statistics
+        total_users = len(df)
+        admin_count = df[df["Role"] == "Admin"].shape[0]
+        approver_count = df[df["Role"] == "Approver"].shape[0]
+        requester_count = df[df["Role"] == "Requester"].shape[0]
+
+        # Custom CSS for styling
+        st.markdown("""
+            <style>
+                .stat-card {
+                    background-color: #1E3A8A;
+                    padding: 20px;
+                    border-radius: 10px;
+                    color: white;
+                    text-align: center;
+                    font-size: 24px;
+                    box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+                }
+                .profile-card {
+                    background-color: #F3F4F6;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 10px;
+                    box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+                    font-size: 18px;
+                    color: #333;
+                }
+                .delete-btn {
+                    background-color: #D32F2F;
+                    color: white;
+                    padding: 5px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+                .delete-btn:hover {
+                    background-color: #B71C1C;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # Display key statistics in cards
+        col1, col2, col3, col4 = st.columns(4)
+        col1.markdown(f"<div class='stat-card'>Total Users<br><b>{total_users}</b></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='stat-card'>Admins<br><b>{admin_count}</b></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='stat-card'>Approvers<br><b>{approver_count}</b></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='stat-card'>Requesters<br><b>{requester_count}</b></div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.subheader("👥 User Profiles")
+
+        # Display users as profile cards
+        for index, row in df.iterrows():
+            col1, col2 = st.columns([4, 1])
+            col1.markdown(
+                f"""
+                <div class='profile-card'>
+                    <b>Name:</b> {row['Name']}<br>
+                    <b>Email:</b> {row['Email']}<br>
+                    <b>Phone:</b> {row['Phone Number']}<br>
+                    <b>Role:</b> {row['Role']}
+                </div>
+                """, unsafe_allow_html=True
+            )
+            if col2.button("❌ Delete", key=f"delete_{index}"):
+                delete_user(row["Email"])
+                st.experimental_rerun()
 
         st.markdown("---")
         st.subheader("➕ Add New User")
@@ -62,13 +118,10 @@ def render_user_profiles():
                 st.warning("Please fill out all required fields.")
             elif password != confirm_password:
                 st.warning("Passwords do not match.")
-            elif not is_valid_email(email):
-                st.warning("Invalid email format.")
             else:
                 try:
                     client = load_credentials()
                     sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
-
                     hashed_password = hash_password(password)
                     sheet.append_row([name, email, phone_number, hashed_password, role])
                     st.success(f"User {name} added successfully with role {role}.")
@@ -76,23 +129,21 @@ def render_user_profiles():
                 except Exception as e:
                     st.error(f"Error adding user: {e}")
 
-        st.markdown("---")
-        st.subheader("🗑️ Delete User")
-
-        user_to_delete = st.selectbox("Select User to Delete", df["Email"])
-        if st.button("Delete User"):
-            try:
-                client = load_credentials()
-                sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
-                row_index = df[df["Email"] == user_to_delete].index[0] + 2  # Account for header row in Google Sheets
-                sheet.delete_rows(row_index)
-                st.success(f"User {user_to_delete} deleted.")
-                st.experimental_rerun()
-            except Exception as e:
-                st.error(f"Error deleting user: {e}")
-
     except Exception as e:
         st.error(f"Error loading user profiles: {e}")
+
+# Delete user function
+def delete_user(email):
+    try:
+        df = fetch_user_data()
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
+
+        row_index = df[df["Email"] == email].index[0] + 2  # Account for header row
+        sheet.delete_rows(row_index)
+        st.success(f"User {email} deleted.")
+    except Exception as e:
+        st.error(f"Error deleting user: {e}")
 
 if __name__ == "__main__":
     render_user_profiles()
