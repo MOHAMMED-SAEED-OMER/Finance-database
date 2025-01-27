@@ -42,7 +42,7 @@ def delete_user(email):
         for idx, record in enumerate(records, start=2):  # Skip header row
             if record["Email"] == email:
                 sheet.delete_rows(idx)
-                st.success(f"User with email {email} deleted successfully!")
+                st.success("User deleted successfully!")
                 st.experimental_rerun()
                 return
         st.warning("User not found.")
@@ -100,7 +100,7 @@ def render_user_profiles():
                     unsafe_allow_html=True,
                 )
             with col2:
-                if st.button(f"Delete {row['Name']}", key=f"delete_{index}"):
+                if st.button("Delete", key=f"delete_{index}"):
                     delete_user(row["Email"])
 
     # Add New User Tab
