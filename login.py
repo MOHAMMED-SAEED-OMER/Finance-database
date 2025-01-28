@@ -1,35 +1,45 @@
-import requests
 import firebase_admin
 from firebase_admin import credentials
 import streamlit as st
+import requests
 
-# Initialize Firebase Admin SDK
+# Initialize Firebase Admin SDK if not already initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["firebase"])
+    cred = credentials.Certificate({
+        "type": st.secrets["firebase"]["type"],
+        "project_id": st.secrets["firebase"]["project_id"],
+        "private_key_id": st.secrets["firebase"]["private_key_id"],
+        "private_key": st.secrets["firebase"]["private_key"],
+        "client_email": st.secrets["firebase"]["client_email"],
+        "client_id": st.secrets["firebase"]["client_id"],
+        "auth_uri": st.secrets["firebase"]["auth_uri"],
+        "token_uri": st.secrets["firebase"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
+    })
     firebase_admin.initialize_app(cred)
 
-# Firebase REST API Login Function
+# Firebase Authentication with REST API
 def verify_user(email, password):
     """
     Verifies the user credentials with Firebase Authentication via REST API.
     """
     try:
-        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={st.secrets['FIREBASE_API_KEY']}"
+        api_key = st.secrets["FIREBASE_API_KEY"]
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
         payload = {
             "email": email,
             "password": password,
             "returnSecureToken": True
         }
         response = requests.post(url, json=payload)
-
-        if response.status_code == 200:
-            return response.json()  # Successfully authenticated user info
-        else:
-            error_message = response.json().get("error", {}).get("message", "Unknown error")
-            st.error(f"Authentication failed: {error_message}")
-            return None
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+        response.raise_for_status()  # Raise an error for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Authentication error: {e}")
+        return None
+    except KeyError:
+        st.error("Missing Firebase API key in secrets.toml.")
         return None
 
 # Custom Styling for the Login Page
@@ -74,7 +84,7 @@ def set_custom_styling():
         unsafe_allow_html=True
     )
 
-# Render Login Page
+# Render the Login Page
 def render_login():
     set_custom_styling()
 
