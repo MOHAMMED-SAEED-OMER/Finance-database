@@ -3,7 +3,7 @@ import gspread
 import pandas as pd
 import plotly.express as px
 from google.oauth2.service_account import Credentials
-from finance_page_tab_2 import render_database_analysis  # Import the analysis module
+from database_analyze import render_database_analysis  # Import the analysis module
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
