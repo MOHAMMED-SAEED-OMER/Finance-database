@@ -1,7 +1,34 @@
 import streamlit as st
+import pandas as pd
 import hashlib
+import gspread
+from google.oauth2.service_account import Credentials
 
-# Custom HTML and CSS for the login page
+# Google Sheets setup
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
+
+def load_credentials():
+    key_data = st.secrets["GOOGLE_CREDENTIALS"]
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
+    return gspread.authorize(credentials)
+
+# Fetch user data from Google Sheets
+def fetch_user_data():
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
+        data = sheet.get_all_records()
+        return pd.DataFrame(data)
+    except Exception as e:
+        st.error(f"Error fetching user data: {e}")
+        return pd.DataFrame()
+
+# Hash the password for security
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# Render login page with dynamic HTML and backend validation
 def render_login():
     st.markdown(
         """
@@ -70,7 +97,7 @@ def render_login():
             <p class="greeting" id="greeting-text"></p>
             <input type="email" id="email" class="form-control" placeholder="Email">
             <input type="password" id="password" class="form-control" placeholder="Password">
-            <button class="login-btn" id="login-btn" onclick="submitLogin()">Sign In</button>
+            <button class="login-btn" onclick="sendLoginData()">Sign In</button>
         </div>
         <script>
             function updateGreeting() {
@@ -85,15 +112,28 @@ def render_login():
                 }
                 document.getElementById("greeting-text").innerText = greeting;
             }
-            function submitLogin() {
+
+            function sendLoginData() {
                 const email = document.getElementById("email").value;
                 const password = document.getElementById("password").value;
-                if (!email || !password) {
-                    alert("Please fill out all fields.");
-                    return;
+                if (email && password) {
+                    fetch("/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email, password }),
+                    }).then((response) => {
+                        response.json().then((data) => {
+                            alert(data.message);
+                            if (data.success) {
+                                location.reload();
+                            }
+                        });
+                    });
+                } else {
+                    alert("Please fill in all fields.");
                 }
-                // Placeholder logic for demo purposes
-                alert("Login button clicked. Backend logic goes here!");
             }
             updateGreeting();
         </script>
@@ -101,11 +141,37 @@ def render_login():
         unsafe_allow_html=True,
     )
 
-    # Backend logic placeholder in Streamlit
-    # The email and password from the JS part are processed in a real scenario using Streamlit backend
-    st.info(
-        "This design uses modern HTML, CSS, and JavaScript. Actual login validation needs backend processing, which you can connect."
-    )
+    # Handle backend login validation
+    if st.experimental_get_query_params().get("action") == ["login"]:
+        try:
+            # Parse email and password sent from frontend
+            email = st.experimental_get_query_params()["email"][0]
+            password = st.experimental_get_query_params()["password"][0]
+
+            # Fetch users from Google Sheets
+            users = fetch_user_data()
+            user = users[users["Email"].str.lower() == email.lower()]
+
+            if user.empty:
+                st.json({"success": False, "message": "❌ User not found."})
+                return
+
+            # Validate password
+            user = user.iloc[0]
+            hashed_password = hash_password(password)
+            if hashed_password != user["Password"]:
+                st.json({"success": False, "message": "❌ Incorrect password."})
+                return
+
+            # Successful login
+            st.session_state["logged_in"] = True
+            st.session_state["user_email"] = email
+            st.session_state["user_role"] = user["Role"]
+            st.session_state["user_name"] = user.get("Name", "User")
+
+            st.json({"success": True, "message": "✅ Login successful!"})
+        except Exception as e:
+            st.json({"success": False, "message": f"Error during login: {e}"})
 
 if __name__ == "__main__":
     render_login()
