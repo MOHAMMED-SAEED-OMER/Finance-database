@@ -1,70 +1,42 @@
+from st_aggrid import AgGrid, GridOptionsBuilder
+import gspread
 import streamlit as st
-from layout import apply_styling, render_sidebar, display_page_title
-
-# Set page configuration
-st.set_page_config(
-    page_title="Finance Database",
-    layout="wide",
-)
-
-# Initialize session state
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-    st.session_state["user_email"] = None
-    st.session_state["user_name"] = None  # Added user_name
-    st.session_state["user_role"] = None
-
-# Apply new styling
-apply_styling()
-
-if not st.session_state["logged_in"]:
-    from login import render_login
-    render_login()
-else:
-    # Render the sidebar and get the selected page
-    page = render_sidebar()
-
-    # Display page title dynamically
-    if page:
-        display_page_title(page)
-
-    # Load pages dynamically
-    if page == "Requests":
-        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
-        tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
-
-        with tab1:
-            from submit_request import render_request_form
-            render_request_form()
-
-        with tab2:
-            from view_requests import render_user_requests
-            render_user_requests()
-
-    elif page == "Approver":
-        from approver_page import render_approver_page
-        render_approver_page()
-
-    elif page == "Payment":
-        from payment_page import render_payment_page
-        render_payment_page()
-
-    elif page == "Liquidation":
-        from liquidation_page import render_liquidation_page
-        render_liquidation_page()
-
-    elif page == "Database":
-        from database import render_database
-        render_database()
-
-    elif page == "Finance Dashboard":
-        from finance_dashboard import render_finance_dashboard
-        render_finance_dashboard()
-
-    elif page == "Add Data":
-        from add_data import render_add_data
-        render_add_data()
-
-    elif page == "User Profiles":
-        from user_profiles import render_user_profiles
-        render_user_profiles()
+from google.oauth2.service_account import Credentials
+import pandas as pd
+# Google Sheets setup
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
+# Load credentials from Streamlit secrets
+def load_credentials():
+    key_data = st.secrets["GOOGLE_CREDENTIALS"]
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
+    return gspread.authorize(credentials)
+# Fetch database
+@st.cache_data(ttl=300)
+def fetch_database():
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+        data = sheet.get_all_records()
+        df = pd.DataFrame(data)
+        return df
+    except Exception as e:
+        st.error(f"Error loading the database: {e}")
+        return pd.DataFrame()
+# Render the Database Page
+def render_database():
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Database Viewer</h2>", unsafe_allow_html=True)
+    st.write("Monitor all requests and their statuses in real-time.")
+    df = fetch_database()
+    if df.empty:
+        st.warning("No data available in the database.")
+        return
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_pagination(enabled=True)
+    gb.configure_side_bar()
+    gb.configure_default_column(filterable=True, editable=True, resizable=True, sortable=True)
+    grid_options = gb.build()
+    st.markdown("### Interactive Data Table")
+    AgGrid(df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=True)
+if __name__ == "__main__":
+    render_database()
