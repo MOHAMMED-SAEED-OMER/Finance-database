@@ -1,65 +1,113 @@
+import gspread
 import streamlit as st
-from layout import apply_styling, render_sidebar, display_page_title
+from google.oauth2.service_account import Credentials
+import pandas as pd
+import io
 
+# Google Sheets setup
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
 
-# Initialize session state
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-    st.session_state["user_email"] = None
-    st.session_state["user_name"] = None  # Added user_name
-    st.session_state["user_role"] = None
+# Load credentials from Streamlit secrets
+def load_credentials():
+    key_data = st.secrets["GOOGLE_CREDENTIALS"]
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
+    return gspread.authorize(credentials)
 
-# Apply new styling
-apply_styling()
+# Fetch and process database
+@st.cache_data(ttl=300)
+def fetch_database():
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
 
-if not st.session_state["logged_in"]:
-    from login import render_login
-    render_login()
-else:
-    # Render the sidebar and get the selected page
-    page = render_sidebar()
+        # Fetch data and convert to DataFrame
+        data = sheet.get_all_records()
+        df = pd.DataFrame(data)
 
-    # Display page title dynamically
-    if page:
-        display_page_title(page)
+        # Convert columns to numeric where applicable
+        df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors="coerce").fillna(0).astype(int)
 
-    # Load pages dynamically
-    if page == "Requests":
-        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
-        tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
+        return df
+    except Exception as e:
+        st.error(f"Error loading the database: {e}")
+        return pd.DataFrame()
 
-        with tab1:
-            from submit_request import render_request_form
-            render_request_form()
+# Render the Database Page
+def render_database():
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Database Viewer</h2>", unsafe_allow_html=True)
+    st.write("Monitor all requests and their statuses in real-time.")
 
-        with tab2:
-            from view_requests import render_user_requests
-            render_user_requests()
+    df = fetch_database()
 
-    elif page == "Approver":
-        from approver_page import render_approver_page
-        render_approver_page()
+    if df.empty:
+        st.warning("No data available in the database.")
+        return
 
-    elif page == "Payment":
-        from payment_page import render_payment_page
-        render_payment_page()
+    # Filter section inside the page
+    st.markdown("### Filter Requests")
+    
+    col1, col2 = st.columns([1, 3])
+    
+    with col1:
+        filter_column = st.selectbox("Select Column to Filter", ["None"] + list(df.columns))
 
-    elif page == "Liquidation":
-        from liquidation_page import render_liquidation_page
-        render_liquidation_page()
+    filtered_df = df.copy()
+    if filter_column != "None":
+        with col2:
+            filter_value = st.text_input(f"Enter value for {filter_column}:")
+        
+        if filter_value:
+            filtered_df = filtered_df[filtered_df[filter_column].astype(str).str.contains(filter_value, case=False, na=False)]
 
-    elif page == "Database":
-        from database import render_database
-        render_database()
+    # Calculate financial metrics
+    total_income = filtered_df[filtered_df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
+    total_expenses = filtered_df[filtered_df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
+    net_funds = total_income + total_expenses  # Expenses are negative
 
-    elif page == "Finance Dashboard":
-        from finance_dashboard import render_finance_dashboard
-        render_finance_dashboard()
+    # Display summary stats
+    st.markdown("### Summary Overview")
+    col1, col2, col3 = st.columns(3)
 
-    elif page == "Add Data":
-        from add_data import render_add_data
-        render_add_data()
+    col1.metric("Total Income", f"{total_income:,} IQD")
+    col2.metric("Total Expenses", f"{total_expenses:,} IQD")
+    col3.metric("Remaining Funds", f"{net_funds:,} IQD")
 
-    elif page == "User Profiles":
-        from user_profiles import render_user_profiles
-        render_user_profiles()
+    # Display the database with improved styling
+    st.markdown("### Request Data")
+
+    st.dataframe(
+        filtered_df.style.set_table_styles([
+            {'selector': 'thead', 'props': [('background-color', '#1E3A8A'), ('color', 'white')]},
+            {'selector': 'tbody tr:nth-child(odd)', 'props': [('background-color', '#f0f0f0')]},
+            {'selector': 'tbody tr:nth-child(even)', 'props': [('background-color', '#ffffff')]}
+        ]),
+        height=500,
+        use_container_width=True
+    )
+
+    # Export data section at the top
+    st.markdown("### Export Data")
+    col1, col2 = st.columns(2)
+    with col1:
+        export_format = st.radio("Choose Export Format:", ["Excel", "CSV"], horizontal=True)
+
+    with col2:
+        if st.button("Download"):
+            if export_format == "Excel":
+                try:
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                        filtered_df.to_excel(writer, index=False, sheet_name="Database")
+                        writer.close()
+                    st.download_button("Download Excel", output.getvalue(), file_name="database_export.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                except Exception as e:
+                    st.error(f"Excel export failed: {e}")
+
+            elif export_format == "CSV":
+                csv = filtered_df.to_csv(index=False).encode("utf-8")
+                st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
+
+if __name__ == "__main__":
+    render_database()
