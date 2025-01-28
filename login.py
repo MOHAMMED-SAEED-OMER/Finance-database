@@ -57,77 +57,74 @@ def set_custom_css():
     st.markdown(
         """
         <style>
-            /* Page Centering */
-            .page-container {
+            /* Background */
+            body {
+                background: linear-gradient(to bottom right, #E0F7FA, #FFF3E0);
+            }
+
+            /* Header */
+            .header {
+                background: linear-gradient(90deg, #184E77, #1E3A8A);
+                color: white;
+                padding: 20px;
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: bold;
+                border-radius: 10px;
+            }
+
+            /* Climate Avatar */
+            .climate-fact {
+                background: rgba(255, 255, 255, 0.4);
+                backdrop-filter: blur(10px);
+                padding: 15px;
+                border-radius: 50%;
+                width: 160px;
+                height: 160px;
                 display: flex;
-                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-            }
-
-            /* Title Styling */
-            .header {
-                font-size: 3rem;
+                text-align: center;
+                font-size: 1.1rem;
                 font-weight: bold;
                 color: #184E77;
-                text-align: center;
-                margin-bottom: 20px;
-                font-family: 'Poppins', sans-serif;
+                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease-in-out;
             }
 
-            /* Climate Fact Box */
-            .climate-tile {
-                background: linear-gradient(145deg, #e0f7fa, #b2ebf2);
-                padding: 20px;
-                border-radius: 20px;
-                text-align: center;
-                font-size: 1.3rem;
-                color: #064273;
-                font-weight: bold;
-                width: 80%;
-                max-width: 420px;
-                box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
-                transition: all 0.3s ease-in-out;
+            .climate-fact:hover {
+                transform: scale(1.1);
             }
 
-            .climate-tile:hover {
-                transform: scale(1.02);
-                box-shadow: 7px 7px 18px rgba(0, 0, 0, 0.2);
-            }
-
-            /* Login Form */
+            /* Glassmorphic Login Box */
             .login-container {
-                background: #ffffff;
-                padding: 25px;
-                border-radius: 15px;
-                width: 90%;
-                max-width: 450px;
-                box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.15);
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(15px);
+                padding: 30px;
+                border-radius: 20px;
+                width: 400px;
+                max-width: 90%;
+                box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
                 text-align: center;
-            }
-
-            .login-title {
-                font-size: 1.8rem;
-                font-weight: bold;
-                color: #184E77;
-                margin-bottom: 15px;
-                font-family: 'Poppins', sans-serif;
+                margin-top: 20px;
             }
 
             /* Input Fields */
             .login-input {
                 border: 2px solid #88C1D0;
-                border-radius: 8px;
-                padding: 12px;
+                border-radius: 10px;
+                padding: 14px;
                 width: 100%;
                 font-size: 1rem;
                 margin-bottom: 10px;
                 transition: all 0.2s ease-in-out;
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
             }
 
             .login-input:focus {
                 border-color: #184E77;
-                box-shadow: 0px 0px 10px rgba(24, 78, 119, 0.3);
+                box-shadow: 0px 0px 12px rgba(24, 78, 119, 0.3);
                 outline: none;
             }
 
@@ -135,19 +132,18 @@ def set_custom_css():
             .btn-login {
                 background: linear-gradient(135deg, #1E3A8A, #3B82F6);
                 color: white;
-                border-radius: 8px;
-                padding: 12px;
+                border-radius: 12px;
+                padding: 14px;
                 font-size: 1.2rem;
                 width: 100%;
                 border: none;
-                font-family: 'Poppins', sans-serif;
+                font-weight: bold;
                 transition: all 0.3s ease-in-out;
             }
 
             .btn-login:hover {
-                background-color: #3B82F6;
                 transform: scale(1.05);
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
             }
 
             /* Footer */
@@ -156,7 +152,6 @@ def set_custom_css():
                 color: #374151;
                 text-align: center;
                 margin-top: 20px;
-                font-family: 'Poppins', sans-serif;
             }
         </style>
         """,
@@ -167,18 +162,20 @@ def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Climate Fact Tile (Redesigned)
+    # Climate Fact Circular Badge
     random_fact = random.choice(climate_facts)
     st.markdown(
         f"""
-        <div class="climate-tile">
-            🌍 {random_fact}
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div class="climate-fact">
+                🌱 {random_fact}
+            </div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Login Box (Refreshed UI)
+    # Login Box (Glassmorphism UI)
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown(f"<div class='login-title'>{get_greeting()}<br>Welcome to the Climate Action Portal</div>", unsafe_allow_html=True)
 
