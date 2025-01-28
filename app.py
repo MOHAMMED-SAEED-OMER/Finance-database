@@ -53,13 +53,14 @@ else:
         render_liquidation_page()
 
     elif page == "Database":
-        # Dynamically import and execute `database.py` after skipping the `set_page_config` command
-        with open("database.py") as f:
-            code = f.read()
-        # Remove any `st.set_page_config()` calls from the `database.py` code
-        sanitized_code = "\n".join(
-            [line for line in code.splitlines() if "st.set_page_config" not in line]
+        # Dynamically import and execute `database.py` after skipping the `st.set_page_config` command
+        with open("database.py", "r") as f:
+            code_lines = f.readlines()
+        # Remove lines containing `st.set_page_config`
+        sanitized_code = "".join(
+            [line for line in code_lines if "st.set_page_config" not in line]
         )
+        # Execute the cleaned code
         exec(compile(sanitized_code, "database.py", "exec"))
 
     elif page == "Finance Dashboard":
