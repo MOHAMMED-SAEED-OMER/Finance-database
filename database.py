@@ -1,8 +1,8 @@
+from st_aggrid import AgGrid, GridOptionsBuilder
 import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
-import io
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -14,20 +14,14 @@ def load_credentials():
     credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
     return gspread.authorize(credentials)
 
-# Fetch and process database
+# Fetch database
 @st.cache_data(ttl=300)
 def fetch_database():
     try:
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
-
-        # Fetch data and convert to DataFrame
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
-
-        # Convert columns to numeric where applicable
-        df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors="coerce").fillna(0).astype(int)
-
         return df
     except Exception as e:
         st.error(f"Error loading the database: {e}")
@@ -44,70 +38,14 @@ def render_database():
         st.warning("No data available in the database.")
         return
 
-    # Filter section inside the page
-    st.markdown("### Filter Requests")
-    
-    col1, col2 = st.columns([1, 3])
-    
-    with col1:
-        filter_column = st.selectbox("Select Column to Filter", ["None"] + list(df.columns))
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_pagination(enabled=True)
+    gb.configure_side_bar()
+    gb.configure_default_column(filterable=True, editable=True, resizable=True, sortable=True)
+    grid_options = gb.build()
 
-    filtered_df = df.copy()
-    if filter_column != "None":
-        with col2:
-            filter_value = st.text_input(f"Enter value for {filter_column}:")
-        
-        if filter_value:
-            filtered_df = filtered_df[filtered_df[filter_column].astype(str).str.contains(filter_value, case=False, na=False)]
-
-    # Calculate financial metrics
-    total_income = filtered_df[filtered_df["TRX type"].str.lower() == "income"]["Liquidated amount"].sum()
-    total_expenses = filtered_df[filtered_df["TRX type"].str.lower() == "expense"]["Liquidated amount"].sum()
-    net_funds = total_income + total_expenses  # Expenses are negative
-
-    # Display summary stats
-    st.markdown("### Summary Overview")
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Total Income", f"{total_income:,} IQD")
-    col2.metric("Total Expenses", f"{total_expenses:,} IQD")
-    col3.metric("Remaining Funds", f"{net_funds:,} IQD")
-
-    # Display the database with improved styling
-    st.markdown("### Request Data")
-
-    st.dataframe(
-        filtered_df.style.set_table_styles([
-            {'selector': 'thead', 'props': [('background-color', '#1E3A8A'), ('color', 'white')]},
-            {'selector': 'tbody tr:nth-child(odd)', 'props': [('background-color', '#f0f0f0')]},
-            {'selector': 'tbody tr:nth-child(even)', 'props': [('background-color', '#ffffff')]}
-        ]),
-        height=500,
-        use_container_width=True
-    )
-
-    # Export data section at the top
-    st.markdown("### Export Data")
-    col1, col2 = st.columns(2)
-    with col1:
-        export_format = st.radio("Choose Export Format:", ["Excel", "CSV"], horizontal=True)
-
-    with col2:
-        if st.button("Download"):
-            if export_format == "Excel":
-                try:
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                        filtered_df.to_excel(writer, index=False, sheet_name="Database")
-                        writer.close()
-                    st.download_button("Download Excel", output.getvalue(), file_name="database_export.xlsx",
-                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                except Exception as e:
-                    st.error(f"Excel export failed: {e}")
-
-            elif export_format == "CSV":
-                csv = filtered_df.to_csv(index=False).encode("utf-8")
-                st.download_button("Download CSV", csv, file_name="database_export.csv", mime="text/csv")
+    st.markdown("### Interactive Data Table")
+    AgGrid(df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=True)
 
 if __name__ == "__main__":
     render_database()
