@@ -32,7 +32,6 @@ def fetch_database():
 
 # Render the Database Page
 def render_database():
-    st.markdown("<div class='page-title'>Database</div>", unsafe_allow_html=True)
 
     # Fetch database data
     df = fetch_database()
