@@ -11,23 +11,15 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
     st.session_state["user_email"] = None
-    st.session_state["user_name"] = None
+    st.session_state["user_name"] = None  # Added user_name
     st.session_state["user_role"] = None
 
 # Apply new styling
 apply_styling()
 
-# Logout function
-def logout():
-    st.session_state["logged_in"] = False
-    st.session_state["user_email"] = None
-    st.session_state["user_name"] = None
-    st.session_state["user_role"] = None
-    st.experimental_rerun()
-
 if not st.session_state["logged_in"]:
-    from login import render_login
-    render_login()
+    from login import render_login  # Ensure `render_login` is defined properly
+    render_login()  # Call the function to render the login page
 else:
     # Render the sidebar and get the selected page
     page = render_sidebar()
@@ -76,10 +68,3 @@ else:
     elif page == "User Profiles":
         from user_profiles import render_user_profiles
         render_user_profiles()
-
-    elif page == "Role Management":
-        from role_management import render_role_management
-        render_role_management()
-
-    else:
-        st.warning("Page not found. Please use the navigation menu.")
