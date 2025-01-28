@@ -51,79 +51,65 @@ motivation_quotes = [
     "💡 Climate action starts with knowledge and commitment."
 ]
 
-# Custom Styling for Framed UI
+# Custom Styling for Compact UI
 def set_custom_css():
     st.markdown(
         """
         <style>
-            /* Page Frame */
-            .frame {
-                display: flex;
-                height: 80vh;
-                border-radius: 20px;
-                overflow: hidden;
-                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #F3F4F6;
             }
-
-            /* Sidebar */
-            .sidebar {
-                width: 40%;
-                background: linear-gradient(135deg, #184E77, #1E3A8A);
-                color: white;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+            
+            /* Centered Container */
+            .login-container {
+                width: 600px;
+                margin: 40px auto;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.15);
                 padding: 30px;
                 text-align: center;
             }
 
-            .sidebar-title {
-                font-size: 2rem;
-                font-weight: bold;
-                margin-bottom: 20px;
-            }
-
-            .sidebar-quote {
-                font-size: 1.2rem;
-                font-weight: bold;
-                font-style: italic;
-                opacity: 0.9;
-            }
-
-            /* Login Box */
-            .login-box {
-                width: 60%;
-                background: white;
-                padding: 40px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                text-align: center;
-            }
-
-            .login-title {
+            /* Header */
+            .header-title {
                 font-size: 2rem;
                 font-weight: bold;
                 color: #1E3A8A;
+                margin-bottom: 10px;
+            }
+
+            /* Quote Box */
+            .quote-box {
+                background: #E3F2FD;
+                padding: 15px;
+                border-radius: 10px;
                 margin-bottom: 20px;
+                font-size: 1.1rem;
+                font-style: italic;
+                font-weight: bold;
+                color: #1E3A8A;
+                box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
             }
 
             /* Input Fields */
             .login-input {
-                border: 2px solid #88C1D0;
-                border-radius: 10px;
-                padding: 14px;
-                width: 80%;
+                width: 90%;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #A7B3C3;
                 font-size: 1rem;
-                margin-bottom: 10px;
-                transition: all 0.2s ease-in-out;
-                background: rgba(255, 255, 255, 0.2);
-                backdrop-filter: blur(10px);
+                margin-bottom: 15px;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.7);
+                backdrop-filter: blur(5px);
             }
 
             .login-input:focus {
-                border-color: #184E77;
-                box-shadow: 0px 0px 12px rgba(24, 78, 119, 0.3);
+                border-color: #1E3A8A;
+                box-shadow: 0px 0px 8px rgba(30, 58, 138, 0.2);
                 outline: none;
             }
 
@@ -131,18 +117,18 @@ def set_custom_css():
             .btn-login {
                 background: linear-gradient(135deg, #1E3A8A, #3B82F6);
                 color: white;
-                border-radius: 12px;
-                padding: 14px;
-                font-size: 1.2rem;
-                width: 80%;
-                border: none;
                 font-weight: bold;
-                transition: all 0.3s ease-in-out;
+                padding: 12px;
+                font-size: 1.1rem;
+                width: 90%;
+                border-radius: 8px;
+                border: none;
+                transition: 0.3s;
             }
 
             .btn-login:hover {
-                transform: scale(1.05);
-                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+                transform: scale(1.03);
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
             }
 
             /* Footer */
@@ -160,24 +146,17 @@ def set_custom_css():
 def render_login():
     set_custom_css()
 
-    # Page Frame
-    st.markdown('<div class="frame">', unsafe_allow_html=True)
-
-    # Sidebar - Information Panel
+    # Get random motivational message
     random_quote = random.choice(motivation_quotes)
-    st.markdown(
-        f"""
-        <div class="sidebar">
-            <div class="sidebar-title">🌍 Climate Action Portal</div>
-            <div class="sidebar-quote">{random_quote}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    # Login Box
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown(f'<div class="login-title">{get_greeting()}<br>Sign in to Your Account</div>', unsafe_allow_html=True)
+    # Login Page Container
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+
+    # Header
+    st.markdown(f'<div class="header-title">{get_greeting()}</div>', unsafe_allow_html=True)
+    
+    # Quote Box
+    st.markdown(f'<div class="quote-box">{random_quote}</div>', unsafe_allow_html=True)
 
     # Login Form
     email = st.text_input("📧 Email", placeholder="Enter your email", key="email")
@@ -217,8 +196,7 @@ def render_login():
         except Exception as e:
             st.error(f"Error during login: {e}")
 
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)  # Close frame div
+    st.markdown("</div>", unsafe_allow_html=True)  # Close login-container
 
     # Footer
     st.markdown("<div class='footer'>© 2025 Hasar Organization for Climate Action</div>", unsafe_allow_html=True)
