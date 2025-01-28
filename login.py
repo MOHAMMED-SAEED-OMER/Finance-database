@@ -52,90 +52,111 @@ climate_facts = [
     "🚲 Switching to cycling for short trips can reduce CO₂ emissions by 67%."
 ]
 
-# Custom Styling for Modern UI
+# Custom Styling for the New UI
 def set_custom_css():
     st.markdown(
         """
         <style>
-            /* Center the entire login box */
-            .login-container {
-                max-width: 420px;
-                margin: auto;
-                padding: 30px;
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 15px;
-                backdrop-filter: blur(12px);
-                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-                text-align: center;
-                transition: all 0.3s ease-in-out;
+            /* Page Centering */
+            .page-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
             }
-            .login-container:hover {
-                transform: scale(1.02);
-                box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.3);
-            }
+
+            /* Title Styling */
             .header {
-                font-size: 2.8rem;
+                font-size: 3rem;
                 font-weight: bold;
-                color: #1E3A8A;
+                color: #184E77;
                 text-align: center;
                 margin-bottom: 20px;
-                font-family: 'Arial', sans-serif;
+                font-family: 'Poppins', sans-serif;
             }
-            .climate-card {
-                background: linear-gradient(135deg, #3B82F6, #6DD5FA);
-                border-radius: 12px;
-                padding: 18px;
+
+            /* Climate Fact Box */
+            .climate-tile {
+                background: linear-gradient(145deg, #e0f7fa, #b2ebf2);
+                padding: 20px;
+                border-radius: 20px;
                 text-align: center;
-                font-size: 1.2rem;
-                color: white;
+                font-size: 1.3rem;
+                color: #064273;
                 font-weight: bold;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-                max-width: 380px;
-                margin: auto;
-                margin-bottom: 20px;
+                width: 80%;
+                max-width: 420px;
+                box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
                 transition: all 0.3s ease-in-out;
             }
-            .climate-card:hover {
-                transform: scale(1.03);
-                box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.2);
+
+            .climate-tile:hover {
+                transform: scale(1.02);
+                box-shadow: 7px 7px 18px rgba(0, 0, 0, 0.2);
             }
-            .login-title {
-                font-size: 1.5rem;
-                font-weight: bold;
-                color: #1E3A8A;
-                margin-bottom: 10px;
-                font-family: 'Arial', sans-serif;
-            }
-            .login-input {
-                border-radius: 10px;
-                padding: 12px;
-                width: 100%;
-                border: 1px solid #ccc;
-                font-size: 1rem;
-                margin-bottom: 12px;
+
+            /* Login Form */
+            .login-container {
+                background: #ffffff;
+                padding: 25px;
+                border-radius: 15px;
+                width: 90%;
+                max-width: 450px;
+                box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.15);
                 text-align: center;
             }
-            .btn-login {
-                background-color: #1E3A8A;
-                color: #ffffff;
+
+            .login-title {
+                font-size: 1.8rem;
+                font-weight: bold;
+                color: #184E77;
+                margin-bottom: 15px;
+                font-family: 'Poppins', sans-serif;
+            }
+
+            /* Input Fields */
+            .login-input {
+                border: 2px solid #88C1D0;
                 border-radius: 8px;
                 padding: 12px;
-                font-size: 1.1rem;
+                width: 100%;
+                font-size: 1rem;
+                margin-bottom: 10px;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .login-input:focus {
+                border-color: #184E77;
+                box-shadow: 0px 0px 10px rgba(24, 78, 119, 0.3);
+                outline: none;
+            }
+
+            /* Button Styling */
+            .btn-login {
+                background: linear-gradient(135deg, #1E3A8A, #3B82F6);
+                color: white;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 1.2rem;
                 width: 100%;
                 border: none;
-                font-family: 'Arial', sans-serif;
+                font-family: 'Poppins', sans-serif;
                 transition: all 0.3s ease-in-out;
             }
+
             .btn-login:hover {
                 background-color: #3B82F6;
                 transform: scale(1.05);
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
             }
+
+            /* Footer */
             .footer {
                 font-size: 0.9rem;
                 color: #374151;
                 text-align: center;
                 margin-top: 20px;
-                font-family: 'Arial', sans-serif;
+                font-family: 'Poppins', sans-serif;
             }
         </style>
         """,
@@ -146,22 +167,22 @@ def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Climate Fact Card (New Feature)
+    # Climate Fact Tile (Redesigned)
     random_fact = random.choice(climate_facts)
     st.markdown(
         f"""
-        <div class="climate-card">
+        <div class="climate-tile">
             🌍 {random_fact}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Login Box
+    # Login Box (Refreshed UI)
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown(f"<div class='login-title'>{get_greeting()}<br>Welcome to the Climate Action Portal</div>", unsafe_allow_html=True)
 
-    # Login form
+    # Login Form
     email = st.text_input("📧 Email", placeholder="Enter your email", key="email")
     password = st.text_input("🔑 Password", placeholder="Enter your password", type="password", key="password")
     remember_me = st.checkbox("Keep me signed in")
@@ -172,7 +193,6 @@ def render_login():
             return
 
         try:
-            # Fetch users from Google Sheets
             users = fetch_user_data()
             user = users[users["Email"].str.lower() == email.lower()]
 
@@ -194,8 +214,6 @@ def render_login():
 
             if remember_me:
                 st.session_state["keep_signed_in"] = True
-            else:
-                st.session_state.pop("keep_signed_in", None)
 
             st.success("✅ Login successful! Redirecting...")
 
