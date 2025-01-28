@@ -186,7 +186,7 @@ def render_finance_dashboard():
             st.plotly_chart(available_funds_chart, use_container_width=True, key="available_funds_chart")
 
     with tab2:
-        render_database_analysis()  # Add the second tab for analysis
+        render_finance_page_tab_2()  # Add the second tab for analysis
 
 if __name__ == "__main__":
     render_finance_dashboard()
