@@ -102,57 +102,42 @@ def render_login():
         <div class="login-container">
             <h2 class="login-title">Hasar Organization</h2>
             <p class="greeting" id="greeting-text"></p>
-            <form action="#" method="post" id="login-form">
-                <input type="text" id="email" name="email" placeholder="📧 Email" class="form-control">
+            <form id="hidden-login-form">
+                <input type="email" id="email" name="email" placeholder="📧 Email" class="form-control">
                 <input type="password" id="password" name="password" placeholder="🔑 Password" class="form-control">
-                <button type="submit" class="btn login-btn">Sign In</button>
             </form>
         </div>
-        <script>
-            function updateGreeting() {
-                const hour = new Date().getHours();
-                let greeting;
-                if (hour < 12) {
-                    greeting = "🌅 Good Morning!";
-                } else if (hour < 18) {
-                    greeting = "☀️ Good Afternoon!";
-                } else {
-                    greeting = "🌙 Good Evening!";
-                }
-                document.getElementById("greeting-text").innerText = greeting;
-            }
-            updateGreeting();
-        </script>
         <div class='footer'>© 2025 Hasar Organization for Climate Action</div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Backend functionality to handle form submission
-    email = st.text_input("Hidden Email Field", label_visibility="hidden")
-    password = st.text_input("Hidden Password Field", type="password", label_visibility="hidden")
-    submitted = st.form_submit_button("Hidden Button")
+    # Backend form handling with Streamlit form
+    with st.form(key="login_form"):
+        email = st.text_input("Email", placeholder="📧 Enter your email")
+        password = st.text_input("Password", placeholder="🔑 Enter your password", type="password")
+        submitted = st.form_submit_button("Sign In")
 
-    if submitted:
-        if not email or not password:
-            st.warning("⚠️ Please fill out all fields.")
-        else:
-            # Fetch user data and validate
-            users = fetch_user_data()
-            user = users[users["Email"].str.lower() == email.lower()]
-            if user.empty:
-                st.error("❌ User not found.")
+        if submitted:
+            if not email or not password:
+                st.warning("⚠️ Please fill out all fields.")
             else:
-                user = user.iloc[0]
-                if hash_password(password) != user["Password"]:
-                    st.error("❌ Incorrect password.")
+                # Fetch user data and validate
+                users = fetch_user_data()
+                user = users[users["Email"].str.lower() == email.lower()]
+                if user.empty:
+                    st.error("❌ User not found.")
                 else:
-                    # Login successful
-                    st.session_state["logged_in"] = True
-                    st.session_state["user_email"] = email
-                    st.session_state["user_name"] = user.get("Name", "User")
-                    st.session_state["user_role"] = user["Role"]
-                    st.success("✅ Login successful! Redirecting...")
+                    user = user.iloc[0]
+                    if hash_password(password) != user["Password"]:
+                        st.error("❌ Incorrect password.")
+                    else:
+                        # Login successful
+                        st.session_state["logged_in"] = True
+                        st.session_state["user_email"] = email
+                        st.session_state["user_name"] = user.get("Name", "User")
+                        st.session_state["user_role"] = user["Role"]
+                        st.success("✅ Login successful! Redirecting...")
 
 if __name__ == "__main__":
     render_login()
