@@ -31,82 +31,81 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Determine greeting based on time
+# Generate dynamic greeting
 def get_greeting():
     now = datetime.datetime.now()
     hour = now.hour
     if 5 <= hour < 12:
-        return "🌅 Good Morning!"
+        return "☀️ Good Morning!"
     elif 12 <= hour < 18:
-        return "☀️ Good Afternoon!"
+        return "🌤️ Good Afternoon!"
     else:
         return "🌙 Good Evening!"
 
-# Climate Facts
-climate_facts = [
-    "🌍 The Earth's temperature has risen by 1.1°C since 1880.",
-    "🌿 Trees can absorb up to 48 pounds of CO₂ per year.",
-    "💧 Only 3% of the Earth's water is fresh, and two-thirds of it is frozen.",
-    "🔥 The last decade was the hottest ever recorded.",
-    "🌱 Plant-based diets can reduce carbon footprints by 50%.",
-    "🚲 Switching to cycling for short trips can reduce CO₂ emissions by 67%."
+# Motivational Messages
+motivation_quotes = [
+    "🌱 Every small action matters in the fight against climate change.",
+    "🌍 Your journey towards a greener future starts today!",
+    "🚀 Innovation and sustainability go hand in hand.",
+    "🌿 A single tree can make a difference, so can you!",
+    "💡 Climate action starts with knowledge and commitment."
 ]
 
-# Custom Styling for the New UI
+# Custom Styling for Framed UI
 def set_custom_css():
     st.markdown(
         """
         <style>
-            /* Background */
-            body {
-                background: linear-gradient(to bottom right, #E0F7FA, #FFF3E0);
-            }
-
-            /* Header */
-            .header {
-                background: linear-gradient(90deg, #184E77, #1E3A8A);
-                color: white;
-                padding: 20px;
-                text-align: center;
-                font-size: 2.5rem;
-                font-weight: bold;
-                border-radius: 10px;
-            }
-
-            /* Climate Avatar */
-            .climate-fact {
-                background: rgba(255, 255, 255, 0.4);
-                backdrop-filter: blur(10px);
-                padding: 15px;
-                border-radius: 50%;
-                width: 160px;
-                height: 160px;
+            /* Page Frame */
+            .frame {
                 display: flex;
-                align-items: center;
+                height: 80vh;
+                border-radius: 20px;
+                overflow: hidden;
+                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+            }
+
+            /* Sidebar */
+            .sidebar {
+                width: 40%;
+                background: linear-gradient(135deg, #184E77, #1E3A8A);
+                color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 30px;
+                text-align: center;
+            }
+
+            .sidebar-title {
+                font-size: 2rem;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+
+            .sidebar-quote {
+                font-size: 1.2rem;
+                font-weight: bold;
+                font-style: italic;
+                opacity: 0.9;
+            }
+
+            /* Login Box */
+            .login-box {
+                width: 60%;
+                background: white;
+                padding: 40px;
+                display: flex;
+                flex-direction: column;
                 justify-content: center;
                 text-align: center;
-                font-size: 1.1rem;
+            }
+
+            .login-title {
+                font-size: 2rem;
                 font-weight: bold;
-                color: #184E77;
-                box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
-                transition: transform 0.3s ease-in-out;
-            }
-
-            .climate-fact:hover {
-                transform: scale(1.1);
-            }
-
-            /* Glassmorphic Login Box */
-            .login-container {
-                background: rgba(255, 255, 255, 0.2);
-                backdrop-filter: blur(15px);
-                padding: 30px;
-                border-radius: 20px;
-                width: 400px;
-                max-width: 90%;
-                box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
-                text-align: center;
-                margin-top: 20px;
+                color: #1E3A8A;
+                margin-bottom: 20px;
             }
 
             /* Input Fields */
@@ -114,7 +113,7 @@ def set_custom_css():
                 border: 2px solid #88C1D0;
                 border-radius: 10px;
                 padding: 14px;
-                width: 100%;
+                width: 80%;
                 font-size: 1rem;
                 margin-bottom: 10px;
                 transition: all 0.2s ease-in-out;
@@ -128,14 +127,14 @@ def set_custom_css():
                 outline: none;
             }
 
-            /* Button Styling */
+            /* Button */
             .btn-login {
                 background: linear-gradient(135deg, #1E3A8A, #3B82F6);
                 color: white;
                 border-radius: 12px;
                 padding: 14px;
                 font-size: 1.2rem;
-                width: 100%;
+                width: 80%;
                 border: none;
                 font-weight: bold;
                 transition: all 0.3s ease-in-out;
@@ -160,24 +159,25 @@ def set_custom_css():
 
 def render_login():
     set_custom_css()
-    st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Climate Fact Circular Badge
-    random_fact = random.choice(climate_facts)
+    # Page Frame
+    st.markdown('<div class="frame">', unsafe_allow_html=True)
+
+    # Sidebar - Information Panel
+    random_quote = random.choice(motivation_quotes)
     st.markdown(
         f"""
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <div class="climate-fact">
-                🌱 {random_fact}
-            </div>
+        <div class="sidebar">
+            <div class="sidebar-title">🌍 Climate Action Portal</div>
+            <div class="sidebar-quote">{random_quote}</div>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Login Box (Glassmorphism UI)
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='login-title'>{get_greeting()}<br>Welcome to the Climate Action Portal</div>", unsafe_allow_html=True)
+    # Login Box
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown(f'<div class="login-title">{get_greeting()}<br>Sign in to Your Account</div>', unsafe_allow_html=True)
 
     # Login Form
     email = st.text_input("📧 Email", placeholder="Enter your email", key="email")
@@ -218,6 +218,9 @@ def render_login():
             st.error(f"Error during login: {e}")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)  # Close frame div
+
+    # Footer
     st.markdown("<div class='footer'>© 2025 Hasar Organization for Climate Action</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
