@@ -1,7 +1,7 @@
 import streamlit as st
 from layout import apply_styling, render_sidebar, display_page_title
 
-# Set page configuration
+# Set page configuration here (only once for the entire app)
 st.set_page_config(
     page_title="Finance Database",
     layout="wide",
@@ -53,8 +53,10 @@ else:
         render_liquidation_page()
 
     elif page == "Database":
-        from database import render_database
-        render_database()
+        # Dynamically import and run `database.py` while skipping its `set_page_config`
+        with open("database.py") as f:
+            code = f.read()
+        exec(compile(code, "database.py", 'exec'))
 
     elif page == "Finance Dashboard":
         from finance_dashboard import render_finance_dashboard
