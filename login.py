@@ -70,7 +70,7 @@ def render_login():
             <p class="greeting" id="greeting-text"></p>
             <input type="email" id="email" class="form-control" placeholder="Email">
             <input type="password" id="password" class="form-control" placeholder="Password">
-            <button class="login-btn" id="login-btn">Sign In</button>
+            <button class="login-btn" id="login-btn" onclick="submitLogin()">Sign In</button>
         </div>
         <script>
             function updateGreeting() {
@@ -85,29 +85,27 @@ def render_login():
                 }
                 document.getElementById("greeting-text").innerText = greeting;
             }
+            function submitLogin() {
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+                if (!email || !password) {
+                    alert("Please fill out all fields.");
+                    return;
+                }
+                // Placeholder logic for demo purposes
+                alert("Login button clicked. Backend logic goes here!");
+            }
             updateGreeting();
         </script>
         """,
         unsafe_allow_html=True,
     )
 
-    # Backend login logic with Streamlit
-    email = st.text_input("📧 Email", value="", placeholder="Enter your email", key="login_email")
-    password = st.text_input("🔑 Password", type="password", placeholder="Enter your password", key="login_password")
-    if st.button("Sign In"):
-        if not email or not password:
-            st.warning("Please fill out all fields.")
-        else:
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-            # Example logic for validating login
-            if email == "admin@example.com" and hashed_password == hashlib.sha256("password".encode()).hexdigest():
-                st.session_state["logged_in"] = True
-                st.session_state["user_email"] = email
-                st.session_state["user_name"] = "Admin"
-                st.session_state["user_role"] = "Admin"
-                st.success("✅ Login successful! Redirecting...")
-            else:
-                st.error("❌ Invalid email or password.")
+    # Backend logic placeholder in Streamlit
+    # The email and password from the JS part are processed in a real scenario using Streamlit backend
+    st.info(
+        "This design uses modern HTML, CSS, and JavaScript. Actual login validation needs backend processing, which you can connect."
+    )
 
 if __name__ == "__main__":
     render_login()
