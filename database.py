@@ -1,102 +1,70 @@
-import gspread
 import streamlit as st
-from google.oauth2.service_account import Credentials
-import pandas as pd
+from layout import apply_styling, render_sidebar, display_page_title
 
-# Google Sheets setup
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
+# Set page configuration
+st.set_page_config(
+    page_title="Finance Database",
+    layout="wide",
+)
 
-# Load credentials from Streamlit secrets
-def load_credentials():
-    key_data = st.secrets["GOOGLE_CREDENTIALS"]
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    credentials = Credentials.from_service_account_info(key_data, scopes=scopes)
-    return gspread.authorize(credentials)
+# Initialize session state
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+    st.session_state["user_email"] = None
+    st.session_state["user_name"] = None  # Added user_name
+    st.session_state["user_role"] = None
 
-# Fetch and process database
-@st.cache_data(ttl=300)
-def fetch_database():
-    try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
+# Apply new styling
+apply_styling()
 
-        # Fetch data and convert to DataFrame
-        data = sheet.get_all_records()
-        df = pd.DataFrame(data)
+if not st.session_state["logged_in"]:
+    from login import render_login
+    render_login()
+else:
+    # Render the sidebar and get the selected page
+    page = render_sidebar()
 
-        return df
-    except Exception as e:
-        st.error(f"Error loading the database: {e}")
-        return pd.DataFrame()
+    # Display page title dynamically
+    if page:
+        display_page_title(page)
 
-# Render the Database Page
-def render_database():
-    st.write("View and manage all financial records efficiently.")
+    # Load pages dynamically
+    if page == "Requests":
+        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
 
-    df = fetch_database()
+        with tab1:
+            from submit_request import render_request_form
+            render_request_form()
 
-    if df.empty:
-        st.warning("No data available in the database.")
-        return
+        with tab2:
+            from view_requests import render_user_requests
+            render_user_requests()
 
-    # Enhanced filter section inside the page
-    st.markdown("<h3 style='color: #1E3A8A;'>🔍 Filter Records</h3>", unsafe_allow_html=True)
+    elif page == "Approver":
+        from approver_page import render_approver_page
+        render_approver_page()
 
-    filter_col, filter_value = st.columns([1, 3])
+    elif page == "Payment":
+        from payment_page import render_payment_page
+        render_payment_page()
 
-    with filter_col:
-        selected_column = st.selectbox(
-            "Choose Column to Filter", 
-            ["None"] + list(df.columns), 
-            index=0
-        )
+    elif page == "Liquidation":
+        from liquidation_page import render_liquidation_page
+        render_liquidation_page()
 
-    filtered_df = df.copy()
+    elif page == "Database":
+        from database import render_database
+        render_database()
 
-    if selected_column != "None":
-        with filter_value:
-            value_input = st.text_input(f"Enter value for {selected_column}:")
+    elif page == "Finance Dashboard":
+        from finance_dashboard import render_finance_dashboard
+        render_finance_dashboard()
 
-        if value_input:
-            filtered_df = filtered_df[
-                filtered_df[selected_column].astype(str).str.contains(value_input, case=False, na=False)
-            ]
+    elif page == "Add Data":
+        from add_data import render_add_data
+        render_add_data()
 
-    # Stylish table visualization
-    st.markdown("<h3 style='color: #1E3A8A;'>📋 Request Data</h3>", unsafe_allow_html=True)
-
-    st.dataframe(
-        filtered_df.style.set_table_styles([
-            {'selector': 'thead', 'props': [('background-color', '#1E3A8A'), ('color', 'white'), ('font-size', '16px')]},
-            {'selector': 'tbody tr:nth-child(odd)', 'props': [('background-color', '#f0f0f0')]},
-            {'selector': 'tbody tr:nth-child(even)', 'props': [('background-color', '#ffffff')]},
-            {'selector': 'td', 'props': [('padding', '8px'), ('border', '1px solid #ddd')]},
-        ]),
-        height=600,
-        use_container_width=True
-    )
-
-    # Custom CSS styling for enhanced UI
-    st.markdown("""
-        <style>
-            .stDataFrame { border-radius: 10px; }
-            .stSelectbox, .stTextInput {
-                border: 2px solid #1E3A8A; 
-                border-radius: 5px; 
-                padding: 8px;
-            }
-            .stButton button {
-                background-color: #1E3A8A;
-                color: white;
-                border-radius: 5px;
-                padding: 8px 20px;
-                border: none;
-            }
-            .stButton button:hover {
-                background-color: #3B82F6;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    render_database()
+    elif page == "User Profiles":
+        from user_profiles import render_user_profiles
+        render_user_profiles()
