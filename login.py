@@ -3,48 +3,92 @@ import firebase_admin
 from firebase_admin import credentials, auth
 
 # Initialize Firebase Admin SDK
-if not firebase_admin._apps:  # Avoid initializing multiple times
-    cred = credentials.Certificate({
-        "type": st.secrets["firebase"]["type"],
-        "project_id": st.secrets["firebase"]["project_id"],
-        "private_key_id": st.secrets["firebase"]["private_key_id"],
-        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
-        "client_email": st.secrets["firebase"]["client_email"],
-        "client_id": st.secrets["firebase"]["client_id"],
-        "auth_uri": st.secrets["firebase"]["auth_uri"],
-        "token_uri": st.secrets["firebase"]["token_uri"],
-        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
-    })
+if not firebase_admin._apps:
+    cred = credentials.Certificate(st.secrets["FIREBASE_CREDENTIALS"])
     firebase_admin.initialize_app(cred)
 
-# Custom login function using Firebase Authentication
-def firebase_login(email, password):
-    try:
-        user = auth.get_user_by_email(email)
-        # Simulating password check (Firebase Auth does not support plaintext password check)
-        # You would use Firebase Auth client-side for password validation in production.
-        if user:
-            return user
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Login failed: {e}")
-        return None
+# Custom CSS for styling improvements
+def set_custom_css():
+    st.markdown(
+        """
+        <style>
+            body {
+                background-color: #f9f9f9;
+                font-family: Arial, sans-serif;
+            }
+            .login-container {
+                max-width: 400px;
+                margin: auto;
+                padding: 2rem;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                text-align: center;
+            }
+            .login-title {
+                font-size: 1.8rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                margin-bottom: 20px;
+            }
+            .login-btn {
+                background-color: #1E3A8A;
+                color: white;
+                padding: 12px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .login-btn:hover {
+                background-color: #3B82F6;
+            }
+            .error-message {
+                color: red;
+                font-size: 0.9rem;
+                margin-top: 10px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 def render_login():
-    st.title("Login to Hasar Organization")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    set_custom_css()
 
-    if st.button("Sign In"):
-        user = firebase_login(email, password)
-        if user:
-            st.session_state["logged_in"] = True
-            st.session_state["user_email"] = email
-            st.success("Login successful!")
+    # Login form
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    st.markdown("<div class='login-title'>Sign in to Hasar Organization</div>", unsafe_allow_html=True)
+
+    email = st.text_input("Email", placeholder="Enter your email")
+    password = st.text_input("Password", placeholder="Enter your password", type="password")
+
+    if st.button("Sign In", use_container_width=True):
+        if not email or not password:
+            st.warning("Please fill in both email and password.")
         else:
-            st.error("Invalid email or password")
+            try:
+                # Verify user with Firebase
+                user = auth.get_user_by_email(email)
+
+                # Placeholder for password verification (Firebase Admin SDK doesn't handle passwords directly)
+                if password == "user-password-placeholder":  # Replace this logic with secure password validation
+                    st.success(f"Welcome back, {user.display_name}!")
+
+                    # Update session state
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_email"] = user.email
+                    st.session_state["user_name"] = user.display_name
+                    st.session_state["user_role"] = "Admin"  # Adjust as per Firebase role logic
+                else:
+                    st.error("Invalid email or password.")
+            except firebase_admin.auth.AuthError:
+                st.error("Authentication failed. Please check your credentials.")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     render_login()
