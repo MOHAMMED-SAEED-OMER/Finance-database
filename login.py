@@ -52,49 +52,53 @@ def set_custom_css():
     st.markdown(
         """
         <style>
+            body {
+                font-family: 'Arial', sans-serif;
+            }
             .header {
                 font-size: 3rem;
                 font-weight: bold;
                 color: #0D3B66;
                 text-align: center;
-                margin-bottom: 30px;
-                font-family: 'Arial', sans-serif;
+                margin-bottom: 20px;
             }
             .login-container {
                 max-width: 450px;
                 margin: auto;
                 padding: 2rem;
-                background: linear-gradient(to bottom, #EBF2FA, #ffffff);
+                background: #F9FAFB;
+                border: 2px solid #D1D5DB;
                 border-radius: 15px;
-                box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
+                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
                 text-align: center;
             }
             .login-title {
-                font-size: 2rem;
+                font-size: 1.8rem;
                 font-weight: bold;
                 color: #0D3B66;
-                margin-bottom: 10px;
-                font-family: 'Arial', sans-serif;
+                margin-bottom: 20px;
+            }
+            .login-input {
+                margin-bottom: 15px;
             }
             .btn-login {
                 background-color: #0D3B66;
                 color: #ffffff;
                 border-radius: 8px;
-                padding: 14px;
+                padding: 10px;
                 font-size: 1.2rem;
                 width: 100%;
                 border: none;
                 font-family: 'Arial', sans-serif;
             }
             .btn-login:hover {
-                background-color: #3B82F6;
+                background-color: #2563EB;
             }
             .footer {
                 font-size: 0.9rem;
-                color: #4B5563;
+                color: #6B7280;
                 text-align: center;
                 margin-top: 20px;
-                font-family: 'Arial', sans-serif;
             }
         </style>
         """,
@@ -109,6 +113,8 @@ def logout():
 def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
+
+    # Login box container
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown("<div class='login-title'>Sign in to Your Account</div>", unsafe_allow_html=True)
 
@@ -124,11 +130,11 @@ def render_login():
         st.session_state.password = ""
 
     # Login form
-    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email")
-    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password")
-    remember_me = st.checkbox("Keep me signed in")
+    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email", key="email_input", help="Your registered email")
+    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password", key="password_input", help="Your account password")
+    remember_me = st.checkbox("Keep me signed in", key="remember_me")
 
-    if st.button("Sign In", use_container_width=True):
+    if st.button("Sign In", use_container_width=True, key="login_button"):
         if not email or not password:
             st.warning("Please fill out all fields.")
             return
@@ -156,19 +162,13 @@ def render_login():
             password_hash = hash_password(password)
             if password_hash != hashed_password:
                 log_login_attempt(email, success=False)
-                if "login_attempts" not in st.session_state:
-                    st.session_state["login_attempts"] = 0
-                st.session_state["login_attempts"] += 1
-                remaining_attempts = 3 - st.session_state["login_attempts"]
-                if remaining_attempts > 0:
-                    st.error(f"❌ Incorrect password. {remaining_attempts} attempts left.")
-                else:
-                    st.error("❌ Too many failed login attempts. Please try again later.")
+                st.error("❌ Incorrect password. Please try again.")
                 return
 
             # Successful login
             st.session_state["logged_in"] = True
             st.session_state["user_email"] = email
+            st.session_state["user_name"] = user.get("Name", "User")  # Use user name if available
             st.session_state["user_role"] = role
 
             # Save session state if "Remember Me" is checked
@@ -182,7 +182,9 @@ def render_login():
 
             st.success("✅ Login successful! Redirecting...")
             log_login_attempt(email, success=True)
-            st.experimental_set_query_params(page="database")
+
+            # Redirect to the main app page
+            st.session_state["page"] = "database"
             st.experimental_rerun()
 
         except Exception as e:
