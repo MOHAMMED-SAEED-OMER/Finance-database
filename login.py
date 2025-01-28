@@ -131,7 +131,7 @@ def render_login():
     # Backend functionality to handle form submission
     email = st.text_input("Hidden Email Field", label_visibility="hidden")
     password = st.text_input("Hidden Password Field", type="password", label_visibility="hidden")
-    submitted = st.form_submit_button("Hidden Button", label_visibility="hidden")
+    submitted = st.form_submit_button("Hidden Button")
 
     if submitted:
         if not email or not password:
