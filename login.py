@@ -34,6 +34,15 @@ def fetch_user_data():
         st.error(f"Error fetching user data: {e}")
         return pd.DataFrame()
 
+# Log login attempts to Google Sheets
+def log_login_attempt(email, success):
+    try:
+        client = load_credentials()
+        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("LoginLogs")
+        sheet.append_row([email, str(success), str(pd.Timestamp.now())])
+    except Exception as e:
+        st.warning(f"Failed to log login attempt: {e}")
+
 # Hash the password
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -46,7 +55,7 @@ def set_custom_css():
             .header {
                 font-size: 3rem;
                 font-weight: bold;
-                color: #1E3A8A;
+                color: #0D3B66;
                 text-align: center;
                 margin-bottom: 30px;
                 font-family: 'Arial', sans-serif;
@@ -55,23 +64,23 @@ def set_custom_css():
                 max-width: 450px;
                 margin: auto;
                 padding: 2rem;
-                background: linear-gradient(to bottom, #f0f4ff, #ffffff);
+                background: linear-gradient(to bottom, #EBF2FA, #ffffff);
                 border-radius: 15px;
                 box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
                 text-align: center;
             }
             .login-title {
-                font-size: 1.8rem;
+                font-size: 2rem;
                 font-weight: bold;
-                color: #1E3A8A;
+                color: #0D3B66;
                 margin-bottom: 10px;
                 font-family: 'Arial', sans-serif;
             }
             .btn-login {
-                background-color: #1E3A8A;
+                background-color: #0D3B66;
                 color: #ffffff;
                 border-radius: 8px;
-                padding: 12px;
+                padding: 14px;
                 font-size: 1.2rem;
                 width: 100%;
                 border: none;
@@ -82,7 +91,7 @@ def set_custom_css():
             }
             .footer {
                 font-size: 0.9rem;
-                color: #374151;
+                color: #4B5563;
                 text-align: center;
                 margin-top: 20px;
                 font-family: 'Arial', sans-serif;
@@ -91,6 +100,11 @@ def set_custom_css():
         """,
         unsafe_allow_html=True
     )
+
+def logout():
+    st.session_state.clear()
+    st.success("Logged out successfully!")
+    st.experimental_rerun()
 
 def render_login():
     set_custom_css()
@@ -101,7 +115,6 @@ def render_login():
     # Check if the user is already logged in
     if "logged_in" in st.session_state and st.session_state["logged_in"]:
         st.success("You are already logged in.")
-        st.query_params.update({"page": "database"})
         return
 
     # Use session state to store login inputs
@@ -123,10 +136,15 @@ def render_login():
         try:
             # Fetch users from Google Sheets
             users = fetch_user_data()
+            if users.empty:
+                st.info("No users found. Please contact your administrator.")
+                return
+
             user = users[users["Email"].str.lower() == email.lower()]
 
             if user.empty:
-                st.error("❌ User not found.")
+                st.error("❌ User not found. Please check your email or contact your administrator.")
+                log_login_attempt(email, success=False)
                 return
 
             # Get the first matching user
@@ -137,7 +155,15 @@ def render_login():
             # Validate password
             password_hash = hash_password(password)
             if password_hash != hashed_password:
-                st.error("❌ Incorrect password.")
+                log_login_attempt(email, success=False)
+                if "login_attempts" not in st.session_state:
+                    st.session_state["login_attempts"] = 0
+                st.session_state["login_attempts"] += 1
+                remaining_attempts = 3 - st.session_state["login_attempts"]
+                if remaining_attempts > 0:
+                    st.error(f"❌ Incorrect password. {remaining_attempts} attempts left.")
+                else:
+                    st.error("❌ Too many failed login attempts. Please try again later.")
                 return
 
             # Successful login
@@ -155,9 +181,9 @@ def render_login():
                 st.session_state.password = ""
 
             st.success("✅ Login successful! Redirecting...")
-
-            # Redirect to database page after login
-            st.query_params.update({"page": "database"})
+            log_login_attempt(email, success=True)
+            st.experimental_set_query_params(page="database")
+            st.experimental_rerun()
 
         except Exception as e:
             st.error(f"Error during login: {e}")
