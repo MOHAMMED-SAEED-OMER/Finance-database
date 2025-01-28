@@ -42,58 +42,93 @@ def get_greeting():
     else:
         return "🌙 Good Evening!"
 
-# Climate Quotes List
-climate_quotes = [
-    "🌱 \"The greatest threat to our planet is the belief that someone else will save it.\" - Robert Swan",
-    "🌍 \"There is no Planet B.\"",
-    "💧 \"Be the change you want to see in the world.\" - Mahatma Gandhi",
-    "🌲 \"Save water, save life.\"",
-    "🌞 \"The future depends on what you do today.\" - Mahatma Gandhi",
-    "🌊 \"Small acts, when multiplied by millions, can change the world.\"",
+# Climate Facts
+climate_facts = [
+    "🌍 The Earth's temperature has risen by 1.1°C since 1880.",
+    "🌿 Trees can absorb up to 48 pounds of CO₂ per year.",
+    "💧 Only 3% of the Earth's water is fresh, and two-thirds of it is frozen.",
+    "🔥 The last decade was the hottest ever recorded.",
+    "🌱 Plant-based diets can reduce carbon footprints by 50%.",
+    "🚲 Switching to cycling for short trips can reduce CO₂ emissions by 67%."
 ]
 
-# Custom CSS for styling
+# Custom Styling for Modern UI
 def set_custom_css():
     st.markdown(
         """
         <style>
+            /* Center the entire login box */
+            .login-container {
+                max-width: 420px;
+                margin: auto;
+                padding: 30px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 15px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+                text-align: center;
+                transition: all 0.3s ease-in-out;
+            }
+            .login-container:hover {
+                transform: scale(1.02);
+                box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.3);
+            }
             .header {
-                font-size: 3rem;
+                font-size: 2.8rem;
                 font-weight: bold;
                 color: #1E3A8A;
                 text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
                 font-family: 'Arial', sans-serif;
             }
-            .login-container {
-                max-width: 450px;
-                margin: auto;
-                padding: 2rem;
-                background: linear-gradient(to bottom, #f0f4ff, #ffffff);
-                border-radius: 15px;
-                box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
+            .climate-card {
+                background: linear-gradient(135deg, #3B82F6, #6DD5FA);
+                border-radius: 12px;
+                padding: 18px;
                 text-align: center;
+                font-size: 1.2rem;
+                color: white;
+                font-weight: bold;
+                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+                max-width: 380px;
+                margin: auto;
+                margin-bottom: 20px;
+                transition: all 0.3s ease-in-out;
+            }
+            .climate-card:hover {
+                transform: scale(1.03);
+                box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.2);
             }
             .login-title {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
                 font-weight: bold;
                 color: #1E3A8A;
                 margin-bottom: 10px;
                 font-family: 'Arial', sans-serif;
             }
-            .quote-card {
-                background-color: white;
-                border-radius: 15px;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-                padding: 20px;
+            .login-input {
+                border-radius: 10px;
+                padding: 12px;
+                width: 100%;
+                border: 1px solid #ccc;
+                font-size: 1rem;
+                margin-bottom: 12px;
                 text-align: center;
-                max-width: 400px;
-                margin: auto;
-                margin-bottom: 20px;
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #1E3A8A;
+            }
+            .btn-login {
+                background-color: #1E3A8A;
+                color: #ffffff;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 1.1rem;
+                width: 100%;
+                border: none;
                 font-family: 'Arial', sans-serif;
+                transition: all 0.3s ease-in-out;
+            }
+            .btn-login:hover {
+                background-color: #3B82F6;
+                transform: scale(1.05);
             }
             .footer {
                 font-size: 0.9rem;
@@ -111,26 +146,27 @@ def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Rotating Climate Quote in the Empty Box
-    random_quote = random.choice(climate_quotes)
+    # Climate Fact Card (New Feature)
+    random_fact = random.choice(climate_facts)
     st.markdown(
         f"""
-        <div class="quote-card">
-            {random_quote}
+        <div class="climate-card">
+            🌍 {random_fact}
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    # Login Box
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
     st.markdown(f"<div class='login-title'>{get_greeting()}<br>Welcome to the Climate Action Portal</div>", unsafe_allow_html=True)
 
     # Login form
-    email = st.text_input("📧 Email", placeholder="Enter your email")
-    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password")
+    email = st.text_input("📧 Email", placeholder="Enter your email", key="email")
+    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password", key="password")
     remember_me = st.checkbox("Keep me signed in")
 
-    if st.button("Sign In", use_container_width=True):
+    if st.button("Sign In", use_container_width=True, key="login_btn"):
         if not email or not password:
             st.warning("Please fill out all fields.")
             return
