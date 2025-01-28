@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
 import datetime
+import random
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -41,6 +42,16 @@ def get_greeting():
     else:
         return "🌙 Good Evening!"
 
+# Climate Quotes List
+climate_quotes = [
+    "🌱 \"The greatest threat to our planet is the belief that someone else will save it.\" - Robert Swan",
+    "🌍 \"There is no Planet B.\"",
+    "💧 \"Be the change you want to see in the world.\" - Mahatma Gandhi",
+    "🌲 \"Save water, save life.\"",
+    "🌞 \"The future depends on what you do today.\" - Mahatma Gandhi",
+    "🌊 \"Small acts, when multiplied by millions, can change the world.\"",
+]
+
 # Custom CSS for styling
 def set_custom_css():
     st.markdown(
@@ -70,28 +81,19 @@ def set_custom_css():
                 margin-bottom: 10px;
                 font-family: 'Arial', sans-serif;
             }
-            .btn-login {
-                background-color: #1E3A8A;
-                color: #ffffff;
-                border-radius: 8px;
-                padding: 12px;
-                font-size: 1.2rem;
-                width: 100%;
-                border: none;
-                font-family: 'Arial', sans-serif;
-            }
-            .btn-login:hover {
-                background-color: #3B82F6;
-            }
-            .animation-card {
+            .quote-card {
                 background-color: white;
                 border-radius: 15px;
                 box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
                 padding: 20px;
                 text-align: center;
-                max-width: 350px;
+                max-width: 400px;
                 margin: auto;
                 margin-bottom: 20px;
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                font-family: 'Arial', sans-serif;
             }
             .footer {
                 font-size: 0.9rem;
@@ -109,12 +111,12 @@ def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Animated Climate GIF inside a card
+    # Rotating Climate Quote in the Empty Box
+    random_quote = random.choice(climate_quotes)
     st.markdown(
-        """
-        <div class="animation-card">
-            <img src="https://media.giphy.com/media/d31vTpVi1LAcDvdm/giphy.gif" width="150">
-            <h4>🌍 Climate Action Portal</h4>
+        f"""
+        <div class="quote-card">
+            {random_quote}
         </div>
         """,
         unsafe_allow_html=True
