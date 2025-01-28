@@ -96,36 +96,53 @@ def render_login():
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<h2 class='login-title'>Hasar Organization</h2>", unsafe_allow_html=True)
+    # Display the HTML login form
+    st.markdown(
+        """
+        <div class="login-container">
+            <h2 class="login-title">Hasar Organization</h2>
+            <p class="greeting" id="greeting-text"></p>
+            <form action="#" method="post" id="login-form">
+                <input type="text" id="email" name="email" placeholder="📧 Email" class="form-control">
+                <input type="password" id="password" name="password" placeholder="🔑 Password" class="form-control">
+                <button type="submit" class="btn login-btn">Sign In</button>
+            </form>
+        </div>
+        <script>
+            function updateGreeting() {
+                const hour = new Date().getHours();
+                let greeting;
+                if (hour < 12) {
+                    greeting = "🌅 Good Morning!";
+                } else if (hour < 18) {
+                    greeting = "☀️ Good Afternoon!";
+                } else {
+                    greeting = "🌙 Good Evening!";
+                }
+                document.getElementById("greeting-text").innerText = greeting;
+            }
+            updateGreeting();
+        </script>
+        <div class='footer'>© 2025 Hasar Organization for Climate Action</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Dynamic greeting
-    hour = pd.Timestamp.now().hour
-    if hour < 12:
-        greeting = "🌅 Good Morning!"
-    elif hour < 18:
-        greeting = "☀️ Good Afternoon!"
-    else:
-        greeting = "🌙 Good Evening!"
-    st.markdown(f"<p class='greeting'>{greeting}</p>", unsafe_allow_html=True)
+    # Backend functionality to handle form submission
+    email = st.text_input("Hidden Email Field", label_visibility="hidden")
+    password = st.text_input("Hidden Password Field", type="password", label_visibility="hidden")
+    submitted = st.form_submit_button("Hidden Button", label_visibility="hidden")
 
-    # Login form
-    email = st.text_input("📧 Email", placeholder="Enter your email")
-    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password")
-
-    if st.button("Sign In"):
+    if submitted:
         if not email or not password:
             st.warning("⚠️ Please fill out all fields.")
         else:
-            # Fetch user data
+            # Fetch user data and validate
             users = fetch_user_data()
-
-            # Check if email exists
             user = users[users["Email"].str.lower() == email.lower()]
             if user.empty:
                 st.error("❌ User not found.")
             else:
-                # Validate password
                 user = user.iloc[0]
                 if hash_password(password) != user["Password"]:
                     st.error("❌ Incorrect password.")
@@ -136,9 +153,6 @@ def render_login():
                     st.session_state["user_name"] = user.get("Name", "User")
                     st.session_state["user_role"] = user["Role"]
                     st.success("✅ Login successful! Redirecting...")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<div class='footer'>© 2025 Hasar Organization for Climate Action</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     render_login()
