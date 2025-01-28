@@ -53,10 +53,14 @@ else:
         render_liquidation_page()
 
     elif page == "Database":
-        # Dynamically import and run `database.py` while skipping its `set_page_config`
+        # Dynamically import and execute `database.py` after skipping the `set_page_config` command
         with open("database.py") as f:
             code = f.read()
-        exec(compile(code, "database.py", 'exec'))
+        # Remove any `st.set_page_config()` calls from the `database.py` code
+        sanitized_code = "\n".join(
+            [line for line in code.splitlines() if "st.set_page_config" not in line]
+        )
+        exec(compile(sanitized_code, "database.py", "exec"))
 
     elif page == "Finance Dashboard":
         from finance_dashboard import render_finance_dashboard
