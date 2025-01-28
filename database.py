@@ -21,6 +21,9 @@ def fetch_database():
         sheet = client.open_by_url(GOOGLE_SHEET_URL).sheet1
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
+
+        # Ensure numeric conversion for necessary columns
+        df["Liquidated amount"] = pd.to_numeric(df["Liquidated amount"], errors="coerce").fillna(0)
         return df
     except Exception as e:
         st.error(f"Error loading the database: {e}")
