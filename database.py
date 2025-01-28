@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
+import plotly.express as px
 from google.oauth2.service_account import Credentials
 
 # Google Sheets setup
@@ -57,9 +58,21 @@ def render_database():
 
     # Add a data visualization section
     st.markdown("<h3 style='color: #1E3A8A;'>Visualization</h3>", unsafe_allow_html=True)
-    trx_type_count = df["TRX type"].value_counts()
-    trx_type_chart = trx_type_count.plot(kind="bar", color=["#3B82F6", "#EF4444", "#F59E0B"], figsize=(8, 4))
-    st.pyplot(trx_type_chart.figure)
+    trx_type_count = df["TRX type"].value_counts().reset_index()
+    trx_type_count.columns = ["TRX Type", "Count"]
+
+    trx_type_chart = px.bar(
+        trx_type_count,
+        x="TRX Type",
+        y="Count",
+        title="Transaction Types Distribution",
+        color="TRX Type",
+        text="Count",
+        color_discrete_sequence=["#3B82F6", "#EF4444", "#F59E0B"],
+        height=400,
+    )
+    trx_type_chart.update_layout(showlegend=False)
+    st.plotly_chart(trx_type_chart, use_container_width=True)
 
 if __name__ == "__main__":
     render_database()
