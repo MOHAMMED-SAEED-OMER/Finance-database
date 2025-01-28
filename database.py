@@ -1,11 +1,6 @@
 import streamlit as st
 from layout import apply_styling, render_sidebar, display_page_title
 
-# Set page configuration
-st.set_page_config(
-    page_title="Finance Database",
-    layout="wide",
-)
 
 # Initialize session state
 if "logged_in" not in st.session_state:
