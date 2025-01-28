@@ -28,7 +28,7 @@ def fetch_user_data():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Render login page with dynamic HTML and backend validation
+# Render login page
 def render_login():
     st.markdown(
         """
@@ -92,86 +92,53 @@ def render_login():
                 font-family: 'Arial', sans-serif;
             }
         </style>
-        <div class="login-container">
-            <h2 class="login-title">Hasar Organization</h2>
-            <p class="greeting" id="greeting-text"></p>
-            <input type="email" id="email" class="form-control" placeholder="Email">
-            <input type="password" id="password" class="form-control" placeholder="Password">
-            <button class="login-btn" onclick="sendLoginData()">Sign In</button>
-        </div>
-        <script>
-            function updateGreeting() {
-                const hour = new Date().getHours();
-                let greeting;
-                if (hour < 12) {
-                    greeting = "🌅 Good Morning!";
-                } else if (hour < 18) {
-                    greeting = "☀️ Good Afternoon!";
-                } else {
-                    greeting = "🌙 Good Evening!";
-                }
-                document.getElementById("greeting-text").innerText = greeting;
-            }
-
-            function sendLoginData() {
-                const email = document.getElementById("email").value;
-                const password = document.getElementById("password").value;
-                if (email && password) {
-                    fetch("/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ email, password }),
-                    }).then((response) => {
-                        response.json().then((data) => {
-                            alert(data.message);
-                            if (data.success) {
-                                location.reload();
-                            }
-                        });
-                    });
-                } else {
-                    alert("Please fill in all fields.");
-                }
-            }
-            updateGreeting();
-        </script>
         """,
         unsafe_allow_html=True,
     )
 
-    # Handle backend login validation
-    if st.experimental_get_query_params().get("action") == ["login"]:
-        try:
-            # Parse email and password sent from frontend
-            email = st.experimental_get_query_params()["email"][0]
-            password = st.experimental_get_query_params()["password"][0]
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    st.markdown("<h2 class='login-title'>Hasar Organization</h2>", unsafe_allow_html=True)
 
-            # Fetch users from Google Sheets
+    # Dynamic greeting
+    hour = pd.Timestamp.now().hour
+    if hour < 12:
+        greeting = "🌅 Good Morning!"
+    elif hour < 18:
+        greeting = "☀️ Good Afternoon!"
+    else:
+        greeting = "🌙 Good Evening!"
+    st.markdown(f"<p class='greeting'>{greeting}</p>", unsafe_allow_html=True)
+
+    # Login form
+    email = st.text_input("📧 Email", placeholder="Enter your email")
+    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password")
+
+    if st.button("Sign In"):
+        if not email or not password:
+            st.warning("⚠️ Please fill out all fields.")
+        else:
+            # Fetch user data
             users = fetch_user_data()
+
+            # Check if email exists
             user = users[users["Email"].str.lower() == email.lower()]
-
             if user.empty:
-                st.json({"success": False, "message": "❌ User not found."})
-                return
+                st.error("❌ User not found.")
+            else:
+                # Validate password
+                user = user.iloc[0]
+                if hash_password(password) != user["Password"]:
+                    st.error("❌ Incorrect password.")
+                else:
+                    # Login successful
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_email"] = email
+                    st.session_state["user_name"] = user.get("Name", "User")
+                    st.session_state["user_role"] = user["Role"]
+                    st.success("✅ Login successful! Redirecting...")
 
-            # Validate password
-            user = user.iloc[0]
-            hashed_password = hash_password(password)
-            if hashed_password != user["Password"]:
-                st.json({"success": False, "message": "❌ Incorrect password."})
-                return
-
-            # Successful login
-            st.session_state["logged_in"] = True
-            st.session_state["user_email"] = email
-            st.session_state["user_role"] = user["Role"]
-            st.session_state["user_name"] = user.get("Name", "User")
-
-            st.json({"success": True, "message": "✅ Login successful!"})
-        except Exception as e:
-            st.json({"success": False, "message": f"Error during login: {e}"})
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='footer'>© 2025 Hasar Organization for Climate Action</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     render_login()
