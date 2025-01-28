@@ -1,7 +1,7 @@
 import streamlit as st
 from layout import apply_styling, render_sidebar, display_page_title
 
-# Set page configuration here (only once for the entire app)
+# Set page configuration
 st.set_page_config(
     page_title="Finance Database",
     layout="wide",
@@ -30,6 +30,7 @@ else:
 
     # Load pages dynamically
     if page == "Requests":
+        st.markdown("<div class='page-title'>Requests</div>", unsafe_allow_html=True)
         tab1, tab2 = st.tabs(["Submit a Request", "View My Requests"])
 
         with tab1:
@@ -53,22 +54,8 @@ else:
         render_liquidation_page()
 
     elif page == "Database":
-        # Dynamically load database.py after removing `st.set_page_config`
-        with open("database.py", "r") as f:
-            code_lines = f.readlines()
-        
-        sanitized_lines = []
-        for line in code_lines:
-            if "st.set_page_config" not in line:  # Remove only the line with `set_page_config`
-                sanitized_lines.append(line)
-        
-        # Join sanitized lines to preserve structure
-        sanitized_code = "".join(sanitized_lines)
-        
-        try:
-            exec(compile(sanitized_code, "database.py", "exec"))
-        except Exception as e:
-            st.error(f"Error loading Database page: {e}")
+        from database import render_database
+        render_database()
 
     elif page == "Finance Dashboard":
         from finance_dashboard import render_finance_dashboard
