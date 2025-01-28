@@ -3,7 +3,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
-from datetime import datetime
+import datetime
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -21,25 +21,27 @@ def fetch_user_data():
         client = load_credentials()
         sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("Users")
         data = sheet.get_all_records()
-
-        # Convert to DataFrame
-        df = pd.DataFrame(data)
-
-        # Ensure expected columns exist
-        required_columns = {"Email", "Password", "Role"}
-        if not required_columns.issubset(df.columns):
-            raise ValueError(f"The Users sheet must include the following columns: {required_columns}")
-
-        return df
+        return pd.DataFrame(data)
     except Exception as e:
         st.error(f"Error fetching user data: {e}")
         return pd.DataFrame()
 
-# Hash the password
+# Hash password
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Custom CSS for styling improvements
+# Determine greeting based on time
+def get_greeting():
+    now = datetime.datetime.now()
+    hour = now.hour
+    if 5 <= hour < 12:
+        return "🌅 Good Morning!"
+    elif 12 <= hour < 18:
+        return "☀️ Good Afternoon!"
+    else:
+        return "🌙 Good Evening!"
+
+# Custom CSS for styling
 def set_custom_css():
     st.markdown(
         """
@@ -47,90 +49,58 @@ def set_custom_css():
             .header {
                 font-size: 3rem;
                 font-weight: bold;
-                color: #0D3B66;
+                color: #1E3A8A;
                 text-align: center;
-                margin-bottom: 10px;
-            }
-            .dynamic-card {
-                max-width: 450px;
-                margin: 10px auto 20px auto;
-                padding: 1.5rem;
-                background: #f9f9f9;
-                border-radius: 15px;
-                border: 2px solid #E5E7EB;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-            }
-            .dynamic-card img {
-                width: 80px;
-                height: 80px;
-                margin-bottom: 10px;
-                border-radius: 50%;
-                background: #EFF6FF;
-                padding: 10px;
-            }
-            .dynamic-card-text {
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #374151;
+                margin-bottom: 30px;
+                font-family: 'Arial', sans-serif;
             }
             .login-container {
                 max-width: 450px;
                 margin: auto;
                 padding: 2rem;
-                background: #FFFFFF;
-                border: 2px solid #D1D5DB;
+                background: linear-gradient(to bottom, #f0f4ff, #ffffff);
                 border-radius: 15px;
-                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+                box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.2);
                 text-align: center;
             }
             .login-title {
                 font-size: 1.8rem;
                 font-weight: bold;
-                color: #0D3B66;
-                margin-bottom: 20px;
+                color: #1E3A8A;
+                margin-bottom: 10px;
+                font-family: 'Arial', sans-serif;
             }
             .btn-login {
-                background-color: #0D3B66;
+                background-color: #1E3A8A;
                 color: #ffffff;
                 border-radius: 8px;
-                padding: 10px;
+                padding: 12px;
                 font-size: 1.2rem;
                 width: 100%;
                 border: none;
                 font-family: 'Arial', sans-serif;
             }
             .btn-login:hover {
-                background-color: #2563EB;
+                background-color: #3B82F6;
+            }
+            .animation-card {
+                background-color: white;
+                border-radius: 15px;
+                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+                padding: 20px;
+                text-align: center;
+                max-width: 350px;
+                margin: auto;
+                margin-bottom: 20px;
             }
             .footer {
                 font-size: 0.9rem;
-                color: #6B7280;
+                color: #374151;
                 text-align: center;
                 margin-top: 20px;
+                font-family: 'Arial', sans-serif;
             }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-def render_dynamic_card():
-    # Get the current time to display a dynamic greeting
-    current_hour = datetime.now().hour
-    if current_hour < 12:
-        greeting = "🌞 Good Morning!"
-    elif current_hour < 18:
-        greeting = "🌤 Good Afternoon!"
-    else:
-        greeting = "🌙 Good Evening!"
-
-    st.markdown(
-        f"""
-        <div class="dynamic-card">
-            <img src="https://i.imgur.com/4M7DDjo.png" alt="Hasar Icon">
-            <div class="dynamic-card-text">{greeting}</div>
-            <div class="dynamic-card-text">Welcome to the Climate Action Portal</div>
-        </div>
         """,
         unsafe_allow_html=True
     )
@@ -139,27 +109,23 @@ def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
-    # Dynamic Feature Card
-    render_dynamic_card()
+    # Animated Climate GIF inside a card
+    st.markdown(
+        """
+        <div class="animation-card">
+            <img src="https://media.giphy.com/media/d31vTpVi1LAcDvdm/giphy.gif" width="150">
+            <h4>🌍 Climate Action Portal</h4>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Login box container
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.markdown("<div class='login-title'>Sign in to Your Account</div>", unsafe_allow_html=True)
-
-    # Check if the user is already logged in
-    if "logged_in" in st.session_state and st.session_state["logged_in"]:
-        st.success("You are already logged in.")
-        return
-
-    # Use session state to store login inputs
-    if "email" not in st.session_state:
-        st.session_state.email = ""
-    if "password" not in st.session_state:
-        st.session_state.password = ""
+    st.markdown(f"<div class='login-title'>{get_greeting()}<br>Welcome to the Climate Action Portal</div>", unsafe_allow_html=True)
 
     # Login form
-    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email")
-    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password")
+    email = st.text_input("📧 Email", placeholder="Enter your email")
+    password = st.text_input("🔑 Password", placeholder="Enter your password", type="password")
     remember_me = st.checkbox("Keep me signed in")
 
     if st.button("Sign In", use_container_width=True):
@@ -176,33 +142,24 @@ def render_login():
                 st.error("❌ User not found.")
                 return
 
-            # Get the first matching user
             user = user.iloc[0]
             hashed_password = user["Password"]
             role = user["Role"]
 
-            # Validate password
-            password_hash = hash_password(password)
-            if password_hash != hashed_password:
+            if hash_password(password) != hashed_password:
                 st.error("❌ Incorrect password.")
                 return
 
-            # Successful login
             st.session_state["logged_in"] = True
             st.session_state["user_email"] = email
-            st.session_state["user_name"] = user.get("Name", "User")  # Use user name if available
             st.session_state["user_role"] = role
 
-            # Save session state if "Remember Me" is checked
             if remember_me:
-                st.session_state.email = email
-                st.session_state.password = password
+                st.session_state["keep_signed_in"] = True
             else:
-                st.session_state.email = ""
-                st.session_state.password = ""
+                st.session_state.pop("keep_signed_in", None)
 
             st.success("✅ Login successful! Redirecting...")
-            st.experimental_rerun()
 
         except Exception as e:
             st.error(f"Error during login: {e}")
