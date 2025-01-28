@@ -3,6 +3,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 import pandas as pd
 import hashlib
+from datetime import datetime
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -34,15 +35,6 @@ def fetch_user_data():
         st.error(f"Error fetching user data: {e}")
         return pd.DataFrame()
 
-# Log login attempts to Google Sheets
-def log_login_attempt(email, success):
-    try:
-        client = load_credentials()
-        sheet = client.open_by_url(GOOGLE_SHEET_URL).worksheet("LoginLogs")
-        sheet.append_row([email, str(success), str(pd.Timestamp.now())])
-    except Exception as e:
-        st.warning(f"Failed to log login attempt: {e}")
-
 # Hash the password
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -52,24 +44,44 @@ def set_custom_css():
     st.markdown(
         """
         <style>
-            body {
-                font-family: 'Arial', sans-serif;
-            }
             .header {
                 font-size: 3rem;
                 font-weight: bold;
                 color: #0D3B66;
                 text-align: center;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+            }
+            .dynamic-card {
+                max-width: 450px;
+                margin: 10px auto 20px auto;
+                padding: 1.5rem;
+                background: #f9f9f9;
+                border-radius: 15px;
+                border: 2px solid #E5E7EB;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+            .dynamic-card img {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 10px;
+                border-radius: 50%;
+                background: #EFF6FF;
+                padding: 10px;
+            }
+            .dynamic-card-text {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #374151;
             }
             .login-container {
                 max-width: 450px;
                 margin: auto;
                 padding: 2rem;
-                background: #F9FAFB;
+                background: #FFFFFF;
                 border: 2px solid #D1D5DB;
                 border-radius: 15px;
-                box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+                box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
                 text-align: center;
             }
             .login-title {
@@ -77,9 +89,6 @@ def set_custom_css():
                 font-weight: bold;
                 color: #0D3B66;
                 margin-bottom: 20px;
-            }
-            .login-input {
-                margin-bottom: 15px;
             }
             .btn-login {
                 background-color: #0D3B66;
@@ -105,14 +114,33 @@ def set_custom_css():
         unsafe_allow_html=True
     )
 
-def logout():
-    st.session_state.clear()
-    st.success("Logged out successfully!")
-    st.experimental_rerun()
+def render_dynamic_card():
+    # Get the current time to display a dynamic greeting
+    current_hour = datetime.now().hour
+    if current_hour < 12:
+        greeting = "🌞 Good Morning!"
+    elif current_hour < 18:
+        greeting = "🌤 Good Afternoon!"
+    else:
+        greeting = "🌙 Good Evening!"
+
+    st.markdown(
+        f"""
+        <div class="dynamic-card">
+            <img src="https://i.imgur.com/4M7DDjo.png" alt="Hasar Icon">
+            <div class="dynamic-card-text">{greeting}</div>
+            <div class="dynamic-card-text">Welcome to the Climate Action Portal</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 def render_login():
     set_custom_css()
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
+
+    # Dynamic Feature Card
+    render_dynamic_card()
 
     # Login box container
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
@@ -130,11 +158,11 @@ def render_login():
         st.session_state.password = ""
 
     # Login form
-    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email", key="email_input", help="Your registered email")
-    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password", key="password_input", help="Your account password")
-    remember_me = st.checkbox("Keep me signed in", key="remember_me")
+    email = st.text_input("📧 Email", value=st.session_state.email, placeholder="Enter your email")
+    password = st.text_input("🔑 Password", value=st.session_state.password, placeholder="Enter your password", type="password")
+    remember_me = st.checkbox("Keep me signed in")
 
-    if st.button("Sign In", use_container_width=True, key="login_button"):
+    if st.button("Sign In", use_container_width=True):
         if not email or not password:
             st.warning("Please fill out all fields.")
             return
@@ -142,15 +170,10 @@ def render_login():
         try:
             # Fetch users from Google Sheets
             users = fetch_user_data()
-            if users.empty:
-                st.info("No users found. Please contact your administrator.")
-                return
-
             user = users[users["Email"].str.lower() == email.lower()]
 
             if user.empty:
-                st.error("❌ User not found. Please check your email or contact your administrator.")
-                log_login_attempt(email, success=False)
+                st.error("❌ User not found.")
                 return
 
             # Get the first matching user
@@ -161,8 +184,7 @@ def render_login():
             # Validate password
             password_hash = hash_password(password)
             if password_hash != hashed_password:
-                log_login_attempt(email, success=False)
-                st.error("❌ Incorrect password. Please try again.")
+                st.error("❌ Incorrect password.")
                 return
 
             # Successful login
@@ -173,7 +195,6 @@ def render_login():
 
             # Save session state if "Remember Me" is checked
             if remember_me:
-                st.session_state["keep_signed_in"] = True
                 st.session_state.email = email
                 st.session_state.password = password
             else:
@@ -181,10 +202,6 @@ def render_login():
                 st.session_state.password = ""
 
             st.success("✅ Login successful! Redirecting...")
-            log_login_attempt(email, success=True)
-
-            # Redirect to the main app page
-            st.session_state["page"] = "database"
             st.experimental_rerun()
 
         except Exception as e:
