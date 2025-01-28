@@ -55,18 +55,6 @@ def render_database():
         use_container_width=True,
     )
 
-    # Add a summary of key statistics
-    st.markdown("<h3 style='color: #1E3A8A;'>Key Statistics</h3>", unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Entries", len(df))
-    with col2:
-        st.metric("Total Income", f"{df[df['TRX type'] == 'Income']['Liquidated amount'].sum():,.0f} IQD")
-    with col3:
-        st.metric("Total Expenses", f"{df[df['TRX type'] == 'Expense']['Liquidated amount'].sum():,.0f} IQD")
-    with col4:
-        st.metric("Pending Requests", len(df[df["Approval Status"] == "Pending"]))
-
     # Add a data visualization section
     st.markdown("<h3 style='color: #1E3A8A;'>Visualization</h3>", unsafe_allow_html=True)
     trx_type_count = df["TRX type"].value_counts()
