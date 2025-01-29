@@ -1,5 +1,13 @@
 import streamlit as st
 
+def apply_styling():
+    st.markdown("""
+    <style>
+        body { background-color: #f0f2f6; }
+        h1 { color: #1E3A8A; }
+    </style>
+    """, unsafe_allow_html=True)
+
 def render_top_navbar():
     """
     Render the top navigation bar with tabs and dropdowns.
