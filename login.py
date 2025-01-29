@@ -5,6 +5,8 @@ import pandas as pd
 import hashlib
 import datetime
 import random
+from streamlit_lottie import st_lottie
+import requests
 
 # Google Sheets setup
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1hZqFmgpMNr4JSTIwBL18MIPwL4eNjq-FAw7-eQ8NiIE/edit#gid=0"
@@ -51,6 +53,16 @@ climate_facts = [
     "🌱 Plant-based diets can reduce carbon footprints by 50%.",
     "🚲 Switching to cycling for short trips can reduce CO₂ emissions by 67%."
 ]
+
+# Load Lottie animation from URL
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# Animation URL (replace with any Lottie animation URL you prefer)
+LOTTIE_URL = "https://assets1.lottiefiles.com/packages/lf20_hs1shz7u.json"
 
 # Custom Styling for Modern UI
 def set_custom_css():
@@ -144,6 +156,12 @@ def set_custom_css():
 
 def render_login():
     set_custom_css()
+
+    # Display Lottie animation at the top
+    lottie_animation = load_lottieurl(LOTTIE_URL)
+    if lottie_animation:
+        st_lottie(lottie_animation, height=200, key="login_animation")
+
     st.markdown("<div class='header'>Hasar Organization</div>", unsafe_allow_html=True)
 
     # Climate Fact Card (New Feature)
