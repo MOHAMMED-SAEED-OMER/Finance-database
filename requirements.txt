@@ -4,3 +4,4 @@ google-auth
 plotly
 fpdf
 firebase-admin
+streamlit-lottie
