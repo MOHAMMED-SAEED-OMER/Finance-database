@@ -1,7 +1,9 @@
 import streamlit as st
+
 def render_sidebar():
     # Sidebar rendering logic
     pass
+    
 def apply_styling():
     st.markdown(
         """
