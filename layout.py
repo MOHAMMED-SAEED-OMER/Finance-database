@@ -1,14 +1,10 @@
 import streamlit as st
 
-def render_sidebar():
-    # Sidebar rendering logic
-    pass
-    
 def apply_styling():
+    # Custom styling for the app
     st.markdown(
         """
         <style>
-            /* Custom styling for the layout */
             [data-testid="stSidebar"] {
                 background-color: #1E3A8A;
                 padding: 20px;
@@ -22,15 +18,21 @@ def apply_styling():
                 text-align: center;
                 margin-bottom: 20px;
             }
+            .sidebar-subtext {
+                font-size: 18px;
+                color: #BBDEFB;
+                text-align: center;
+                margin-bottom: 30px;
+            }
             .nav-btn {
                 background-color: #3B82F6;
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 10px;
+                padding: 15px;
                 width: 100%;
                 text-align: center;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: bold;
                 margin-bottom: 10px;
                 box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
@@ -40,51 +42,62 @@ def apply_styling():
                 transform: scale(1.05);
                 transition: 0.2s;
             }
+            .logout-btn {
+                background-color: #D32F2F;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 15px;
+                width: 100%;
+                font-size: 18px;
+                font-weight: bold;
+                margin-top: 20px;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+            }
+            .logout-btn:hover {
+                background-color: #B71C1C;
+                transform: scale(1.05);
+                transition: 0.2s;
+            }
+            .page-title {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #1E3A8A;
+                text-align: center;
+                margin-bottom: 20px;
+                text-transform: uppercase;
+            }
         </style>
         """,
         unsafe_allow_html=True
     )
 
 def render_sidebar():
-    st.sidebar.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
+    # Create sidebar content
+    with st.sidebar:
+        st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
 
-    main_tabs = {
-        "Requests": ["Submit a Request", "View My Requests"],
-        "Approver": [],
-        "Payment": [],
-        "Liquidation": [],
-        "Database": [],
-        "Finance Dashboard": ["Overview", "Analysis"],
-        "Add Data": [],
-        "User Profiles": ["User Overview", "Add New User"]
-    }
+        # User details display
+        user_name = st.session_state.get("user_name", "Guest")
+        st.markdown(f"<div class='sidebar-subtext'>Welcome, {user_name}</div>", unsafe_allow_html=True)
 
-    selected_tab = st.session_state.get("selected_tab", "Requests")
-    selected_subtab = st.session_state.get("selected_subtab", "")
+        # Navigation buttons
+        pages = ["Requests", "Approver", "Payment", "Liquidation", "Database", "Finance Dashboard", "Add Data", "User Profiles"]
+        selected_page = st.session_state.get("selected_page", pages[0])
 
-    for tab, subtabs in main_tabs.items():
-        if subtabs:
-            # Create a button that reveals a dropdown if there are subtabs
-            if st.sidebar.button(tab, key=tab):
-                st.session_state["selected_tab"] = tab
-                st.session_state["selected_subtab"] = ""
-                selected_tab = tab
+        for page in pages:
+            if st.button(page, key=page, help=f"Go to {page}", use_container_width=True):
+                st.session_state["selected_page"] = page
+                st.experimental_rerun()
 
-            if selected_tab == tab:
-                # Show the subtabs as buttons
-                for subtab in subtabs:
-                    if st.sidebar.button(f"   {subtab}", key=subtab):
-                        st.session_state["selected_subtab"] = subtab
-                        selected_subtab = subtab
-        else:
-            # If no subtabs, just a single button
-            if st.sidebar.button(tab, key=tab):
-                st.session_state["selected_tab"] = tab
-                st.session_state["selected_subtab"] = ""
-                selected_tab = tab
-                selected_subtab = ""
+        if st.button("Log Out", key="logout_btn", help="Log out of the application", use_container_width=True):
+            logout()
 
-    return selected_tab, selected_subtab
+def display_page_title(page):
+    # Display the page title at the top
+    st.markdown(f"<div class='page-title'>{page}</div>", unsafe_allow_html=True)
 
-def display_page_title(page_title):
-    st.markdown(f"<h1 style='text-align: center; color: #1E3A8A;'>{page_title}</h1>", unsafe_allow_html=True)
+def logout():
+    # Clear session state on logout
+    st.session_state.clear()
+    st.experimental_rerun()
