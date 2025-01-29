@@ -18,8 +18,8 @@ if "logged_in" not in st.session_state:
 apply_styling()
 
 if not st.session_state["logged_in"]:
-    from login import render_login  # Ensure `render_login` is defined properly
-    render_login()  # Call the function to render the login page
+    from login import render_login
+    render_login()
 else:
     # Render the sidebar and get the selected page
     page = render_sidebar()
