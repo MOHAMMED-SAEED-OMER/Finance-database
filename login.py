@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Define the Firebase API key (replace this with your actual key)
-FIREBASE_API_KEY = st.secrets["FIREBASE_API_KEY"]
+FIREBASE_API_KEY = st.secrets["AIzaSyANsvS9d7Vcw-pvJeIupLbBH-wDXw1BgjE"]
 
 # Firebase Authentication endpoint
 FIREBASE_AUTH_ENDPOINT = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
