@@ -1,7 +1,6 @@
 import streamlit as st
 
 def apply_styling():
-    # Custom styling for the app
     st.markdown(
         """
         <style>
@@ -73,31 +72,46 @@ def apply_styling():
     )
 
 def render_sidebar():
-    # Create sidebar content
     with st.sidebar:
         st.markdown("<div class='sidebar-text'>Finance Management System</div>", unsafe_allow_html=True)
 
-        # User details display
-        user_name = st.session_state.get("user_name", "Guest")
+        # Fetch user details
+        user_name = st.session_state.get('user_name', 'Guest')
         st.markdown(f"<div class='sidebar-subtext'>Welcome, {user_name}</div>", unsafe_allow_html=True)
 
-        # Navigation buttons
-        pages = ["Requests", "Approver", "Payment", "Liquidation", "Database", "Finance Dashboard", "Add Data", "User Profiles"]
-        selected_page = st.session_state.get("selected_page", pages[0])
+        # Role-based navigation
+        role = st.session_state.get("user_role", "Guest")
+        pages = []
+
+        if role == "Admin":
+            pages = [
+                "Requests", "Approver", "Payment", "Liquidation",
+                "Database", "Finance Dashboard", "Add Data", "User Profiles"
+            ]
+        elif role == "Approver":
+            pages = ["Approver", "Database"]
+        elif role == "Requester":
+            pages = ["Requests"]
+
+        selected_page = st.session_state.get("selected_page", pages[0] if pages else None)
 
         for page in pages:
-            if st.button(page, key=page, help=f"Go to {page}", use_container_width=True):
+            if st.button(page, key=page, help=f"Navigate to {page}", use_container_width=True):
                 st.session_state["selected_page"] = page
-                st.experimental_rerun()
+                st.rerun()
 
-        if st.button("Log Out", key="logout_btn", help="Log out of the application", use_container_width=True):
+        if st.button("Log Out", key="logout_btn", help="Click to log out", use_container_width=True):
             logout()
 
+        return st.session_state.get("selected_page", pages[0] if pages else None)
+
 def display_page_title(page):
-    # Display the page title at the top
     st.markdown(f"<div class='page-title'>{page}</div>", unsafe_allow_html=True)
 
+# Logout function
 def logout():
-    # Clear session state on logout
-    st.session_state.clear()
-    st.experimental_rerun()
+    st.session_state["logged_in"] = False
+    st.session_state["user_email"] = None
+    st.session_state["user_name"] = None
+    st.session_state["user_role"] = None
+    st.rerun()
