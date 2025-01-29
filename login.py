@@ -3,6 +3,10 @@ from firebase_admin import credentials
 import streamlit as st
 import requests
 
+# Debugging step: check if secrets are being read correctly
+st.write("Firebase API Key:", st.secrets.get("FIREBASE_API_KEY"))
+st.write("All Secrets:", st.secrets)
+
 # Initialize Firebase Admin SDK if not already initialized
 if not firebase_admin._apps:
     cred = credentials.Certificate({
